@@ -5,8 +5,6 @@ The goal of this project was to make an engine that can be used to replicate old
 
 For an example, check out [Frogger](https://www.google.com "Frogger made in EntityEngine")!
 
-## Installation
-
 ## Simple example
 
 This is just a simple documentation through an example. For a detailed one, see [EntityEngine Documentation](https://asd).
