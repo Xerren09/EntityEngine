@@ -3,11 +3,11 @@ EntityEngine is a simple videogame engine written in javascript, designed to emu
 
 The goal of this project was to make an engine that can be used to replicate old cartridge games.
 
-For an example, check out [Frogger](https://www.google.com "Frogger made in EntityEngine")!
+For an example, check out [Frogger](https://github.com/Xerren09/Frogger "Frogger made in EntityEngine")!
 
 ## Simple example
 
-This is just a simple documentation through an example. For a detailed one, see [EntityEngine Documentation](https://asd).
+This is just a simple documentation through an example. For a detailed one, see [EntityEngine Documentation](https://github.com/Xerren09/EntityEngine).
 
 #### Adding a gameobject
 ```javascript
