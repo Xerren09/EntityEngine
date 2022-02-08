@@ -5,6 +5,8 @@ The goal of this project was to make an engine that can be used to replicate old
 
 For an example, check out [Frogger](https://github.com/Xerren09/Frogger "Frogger made in EntityEngine")!
 
+Huge thanks for my friend Rachael Cowan, for helping me track down and figure out a solution to a nasty and really obscure performance issue with the rendering functions, without her help I would have never figured it out.
+
 ## Simple example
 
 This is just a simple documentation through an example. For a detailed one, see [EntityEngine Documentation](https://github.com/Xerren09/EntityEngine).
