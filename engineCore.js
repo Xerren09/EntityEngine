@@ -315,7 +315,7 @@ EntityGraphics.Render = function () {
         }
         //
         if (EntityEngine.EnginePerformanceDisplayEnabled == true) {
-            EnginePerformance.endTimer();
+            EntityEngine.EnginePerformance.endTimer();
         }
     }
 }
