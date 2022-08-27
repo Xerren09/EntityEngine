@@ -1,5 +1,9 @@
 # A nasty rendering performance challenge
 
+### Note
+> This was written in 2021, during my first year in university, about the performance of the first version of this engine (as that, most of this code doesn't exist anymore). Since then it has went through a lot of changes, and I learnt a whole lot more too, but it's still an interesting read!
+> Also, without Rachael's help, none of the project would be around, since a lot of it builds upon what is detailed here.
+
 Quite early in the project there was a weird feeling of sloggyness when it came to testing the engine with a simple game [Frogger](https://github.com/Xerren09/Frogger). It ran *okay*, but not *well*; at least not as well as I would have expected from such a small game. Although previously I only used Unity engine, I was sure a web browser’s JavaScript engine cannot be that much different in terms of speed in such a trivial case.
 
 ## Investigation
@@ -12,7 +16,7 @@ Even weirder, when I showed the game to my friend [Rachael](https://www.linkedin
 
 I got the game up and running side by side on a chromium-based browser (Brave) and Firefox to capture the performance:
 
-![Performance of the old rendering code, operating with separate sprites per segment](./docs/old.png)
+![Performance of the old rendering code, operating with separate sprites per segment](./Images/old.png)
 
 Somehow chromium had no issues at all and was *easily* bringing the performance expected.
 
@@ -51,7 +55,7 @@ objectSpriteList.sprites.forEach((spriteElement, index) => {
 ```
 The major performance gain comes from the fact that this way there is only one image loaded in, and the variable newer changes; making it extremely cheap to perform actions on, in contrast with individual images being loaded, used, unloaded constantly, hundred times a rendering cycle. Right after changing the rendering method, it became evident just how much it really meant:
 
-![Performance of the updated rendering code, operating with a single sprite sheet](./docs/new.png)
+![Performance of the updated rendering code, operating with a single sprite sheet](./Images/new.png)
 
 ## Conclusion
 
