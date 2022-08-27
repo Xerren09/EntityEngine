@@ -1,6 +1,4 @@
-import { Render } from "./Renderer.js";
-
-export class CanvasRenderer {
+export default class CanvasRenderer {
     public readonly Canvas: HTMLCanvasElement;
     public readonly Context: CanvasRenderingContext2D;
 
@@ -15,9 +13,5 @@ export class CanvasRenderer {
             this.Canvas.height = this.Canvas.offsetHeight;
             this.Context = this.Canvas.getContext("2d");
         }
-    }
-
-    Render() {
-        Render(this);
     }
 }

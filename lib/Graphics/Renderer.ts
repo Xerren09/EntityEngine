@@ -1,10 +1,10 @@
 import { EntityList } from '../Entities/Entities.js';
-import { AnimatedSprite } from '../Sprites/AnimatedSprite.js';
-import { Sprite } from '../Sprites/Sprite.js';
-import { SpriteSheets } from '../Sprites/Sprites.js';
-import { CanvasRenderer } from './CanvasRenderer.js';
+import AnimatedSprite from '../Sprites/AnimatedSprite.js';
+import Sprite from '../Sprites/Sprite.js';
+import { SpriteSheets } from '../Sprites/SpriteSheets.js';
+import CanvasRenderer from './CanvasRenderer.js';
 
-export function Render(renderer: CanvasRenderer) {
+export default function Render(renderer: CanvasRenderer) {
     // Clear canvas
     renderer.Context.clearRect(0, 0, renderer.Canvas.width, renderer.Canvas.height);
 
@@ -12,6 +12,7 @@ export function Render(renderer: CanvasRenderer) {
         // Get sprite's data
         const entitySprite = entity.Sprite;
         const entitySpriteSheet = SpriteSheets.Find(entitySprite.SpriteSheetID);
+        // TODO: constrain spritesheet sprites to their tilesize, but let hex-colours take up the remaining space in stretch-to-fill mode
         let tileSize = entity.Size;
         if (entitySpriteSheet) {
             tileSize = entitySpriteSheet.TileSize;

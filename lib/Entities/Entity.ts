@@ -1,11 +1,10 @@
-import { AnimatedSprite } from '../Sprites/AnimatedSprite.js';
-import { Sprite } from '../Sprites/Sprite.js';
+import AnimatedSprite from '../Sprites/AnimatedSprite.js';
+import Sprite from '../Sprites/Sprite.js';
 import { rectSize, vector2D } from '../Types/Types.js';
 import { GetCollisionsByTag } from './Collision.js';
 
-export class Entity {
+export default class Entity {
     public readonly ID: string;
-    public readonly Name: string;
     public Tags: string[];
     public Position: vector2D = { x: 0, y: 0 };
     // TODO: scale sprite to this size
@@ -33,8 +32,8 @@ export class Entity {
     //public Rotation: number = 0;
     public Sprite: Sprite | AnimatedSprite;
 
-    constructor(name: string) {
-        this.Name = name;
+    constructor(id: string) {
+        this.ID = id;
     }
 
     public Translate(vector: vector2D) {

@@ -1,14 +1,15 @@
 {
-  "compilerOptions": {
-    "noImplicitAny": false,
-    "noEmitOnError": true,
-    "removeComments": false,
-    "sourceMap": true,
-    "target": "ES2016",
-    "outDir": "js",
-    "moduleResolution": "Node"
-  },
-  "include": [
-    "Core/**/*"
-  ]
+    "compilerOptions": {
+        "noImplicitAny": false,
+        "noEmitOnError": true,
+        "removeComments": false,
+        "sourceMap": true,
+        "target": "ES2016",
+        "outDir": "js",
+        "moduleResolution": "Node"
+    },
+    "include": [
+        "lib/**/*", 
+        "index.ts"  
+    ]
 }

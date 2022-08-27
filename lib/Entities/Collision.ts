@@ -1,6 +1,6 @@
 import { EntityList } from "./Entities.js";
 import { vector2D } from "../Types/Types";
-import { Entity } from "./Entity.js";
+import Entity from "./Entity.js";
 
 /**
  * Gets the list of Entities with the given tag(s) that are overlapping the specified Entity.

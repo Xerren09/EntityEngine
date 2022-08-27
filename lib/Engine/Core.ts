@@ -1,9 +1,10 @@
 import { EntityList } from "../Entities/Entities.js";
-import { AnimationUpdateLoop } from "../Graphics/AnimationUpdateLoop.js";
-import { CanvasRenderer } from "../Graphics/CanvasRenderer.js";
-import { SpriteSheetList } from "../Sprites/Sprites.js";
+import AnimationUpdateLoop from "../Graphics/AnimationUpdateLoop.js";
+import CanvasRenderer from "../Graphics/CanvasRenderer.js";
+import Render from "../Graphics/Renderer.js";
+import { SpriteSheetList, SpriteSheets } from "../Sprites/SpriteSheets.js";
 
-export class EntityEngine {
+export default class EntityEngine {
     private _targetfps: number = 60;
     private _lastCycleExecuteTimestamp: number;
     private _lastCycleExecuteStart: number;
@@ -37,7 +38,7 @@ export class EntityEngine {
             // Actual update function called now; this is where any gamecode is executed
             this.Update();
             // Render entities
-            this.Renderer.Render();
+            Render(this.Renderer);
             // Update animations
             AnimationUpdateLoop();
             // Call custom render function
@@ -68,7 +69,11 @@ export class EntityEngine {
         this.Awake();
         this._awaitUntilTimestamp = 0;
         this._lastCycleExecuteTimestamp = 0;
-        requestAnimationFrame(this.CycleExecute);
+        SpriteSheets.Load().then(() => {
+            requestAnimationFrame(this.CycleExecute);
+        }).catch((error) => {
+            console.error("One or more SpriteSheet(s) failed to load. Make sure the source images can be accessed.");
+        });
     }
 
     /**

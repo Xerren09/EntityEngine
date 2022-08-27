@@ -1,7 +1,6 @@
 import { rectSize, vector2D } from "../Types/Types";
 
-
-export class SpriteSheet
+export default class SpriteSheet
 {
     public readonly ID: string = "";
     public readonly Image: HTMLImageElement = new Image();

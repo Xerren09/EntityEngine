@@ -1,4 +1,4 @@
-import { SpriteSheet } from "./SpriteSheet.js";
+import SpriteSheet from "./SpriteSheet.js";
 
 export const SpriteSheetList: Array<SpriteSheet> = [];
 
@@ -23,5 +23,13 @@ export const SpriteSheets = {
         if (index != -1) {
             SpriteSheetList.splice(index, 1);
         }
+    },
+
+    Load(): Promise<void[]> {
+        const spriteSheetLoaders = SpriteSheetList.map((spriteSheet) => { 
+            const loader = spriteSheet.Load();
+            return loader;
+        });
+        return Promise.all(spriteSheetLoaders);
     }
 }

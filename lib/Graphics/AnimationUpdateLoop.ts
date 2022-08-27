@@ -1,7 +1,7 @@
 import { EntityList } from "../Entities/Entities.js";
-import { AnimatedSprite } from "../Sprites/AnimatedSprite.js";
+import AnimatedSprite from "../Sprites/AnimatedSprite.js";
 
-export function AnimationUpdateLoop() {
+export default function AnimationUpdateLoop() {
     EntityList.forEach(entity => {
         const sprite = entity.Sprite;
         // If the sprite is animated, run the next update

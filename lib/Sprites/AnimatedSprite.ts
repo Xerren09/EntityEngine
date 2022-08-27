@@ -1,11 +1,6 @@
-import { rectSize } from "../Types/Types";
-import { SpriteSheets } from "./Sprites.js";
+import Sprite from "./Sprite.js";
 
-export class AnimatedSprite {
-    public readonly Name: string;
-    public readonly Contents: Array<string | number>;
-    public readonly SpriteSheetID: string;
-    public readonly TileSize: rectSize = { width: -1, height: -1 };
+export default class AnimatedSprite extends Sprite {
     public readonly Speed: number;
     private _index: number = 0;
     public get Index() {
@@ -17,13 +12,8 @@ export class AnimatedSprite {
     private _lastUpdate: number = 0;
 
     constructor(name: string, speed: number, contents: Array<string | number>, spriteSheetID: string = "") {
-        this.Name = name;
+        super(name, contents, spriteSheetID);
         this.Speed = speed;
-        this.Contents = contents;
-        this.SpriteSheetID = spriteSheetID;
-        if (this.SpriteSheetID.length != 0) {
-            this.TileSize = SpriteSheets.Find(spriteSheetID).TileSize;
-        }
     }
 
     public Next() {
