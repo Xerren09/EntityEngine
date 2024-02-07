@@ -1,8 +1,16 @@
-import { EntityList } from "../Entities/Entities.js";
+import { Entities } from "../Entities/Entities.js";
 import AnimationUpdateLoop from "../Graphics/AnimationUpdateLoop.js";
 import CanvasRenderer from "../Graphics/CanvasRenderer.js";
 import Render from "../Graphics/Renderer.js";
-import { SpriteSheetList, SpriteSheets } from "../Sprites/SpriteSheets.js";
+import { SpriteSheetList, SpriteSheets, _SpriteSheets } from "../Sprites/SpriteSheets.js";
+
+enum ENGINE_EVENTS {
+    awake = "awake",
+    update = "update",
+    customRender = "customRender"
+}
+
+type EngineEvents = keyof typeof ENGINE_EVENTS;
 
 export default class EntityEngine {
     private _targetfps: number = 60;
@@ -37,11 +45,13 @@ export default class EntityEngine {
             // ------
             // Actual update function called now; this is where any gamecode is executed
             this.Update();
+            this.dispatchEngineEvent(ENGINE_EVENTS.update);
             // Render entities
             Render(this.Renderer);
             // Update animations
             AnimationUpdateLoop();
             // Call custom render function
+            this.dispatchEngineEvent(ENGINE_EVENTS.customRender, this.Renderer.Context);
             this.CustomRender(this.Renderer);
             // ------
             this._lastCycleExecuteDuration = (performance.now() - this._lastCycleExecuteStart);
@@ -65,8 +75,9 @@ export default class EntityEngine {
      */
     public Start() {
         SpriteSheetList.length = 0;
-        EntityList.length = 0;
+        this.Entities.Wipe();
         this.Awake();
+        this.dispatchEngineEvent(ENGINE_EVENTS.awake);
         this._awaitUntilTimestamp = 0;
         this._lastCycleExecuteTimestamp = 0;
         SpriteSheets.Load().then(() => {
@@ -150,4 +161,78 @@ export default class EntityEngine {
         const fps = (1000 / this._lastCycleExecuteDuration);
         return fps;
     }
+
+    //
+    //
+    //
+
+    public readonly Entities: Entities;
+
+    public readonly SpriteSheets: _SpriteSheets;
+
+    private readonly _events: EventLists = {
+        awake: [],
+        update: [],
+        customRender: []
+    }
+
+    constructor() {
+        this.Entities = new Entities();
+        this.SpriteSheets = new _SpriteSheets();
+    }
+
+    public addEventListener(type: "awake" , listener: () => void): void;
+    public addEventListener(type: "update", listener: (delta: number) => void): void;
+    public addEventListener(type: "customRender", listener: (renderer: CanvasRenderingContext2D) => void): void;
+    public addEventListener(type: "update" | "awake" | "customRender", listener: (...args: any[]) => void) {
+        const keyCheck = Object.keys(this._events).find(el => el === type);
+        if (keyCheck == undefined)
+            throw new Error(`No engine event with the specific type "${type}" exists`);
+
+        if (this._events[type].find(el => el == listener)) {
+            console.warn(`This engine event listener instance has already been added to ${type}.`);
+            return;
+        }
+        
+        this._events[type].push(listener);
+    }
+
+    public removeEventListener(type: "update" | "awake" | "customRender", listener: (...args: any[]) => void) {
+        const keyCheck = Object.keys(this._events).find(el => el === type);
+        if (keyCheck == undefined)
+            throw new Error(`No engine event with the specific type "${type}" exists`);
+
+        const index = this._events[type].findIndex(el => el == listener);
+        if (index != -1) {
+            this._events[type].splice(index, 1);
+        }
+    }
+
+    private dispatchEngineEvent(type: ENGINE_EVENTS, ...params: any) {
+        const handlers = this._events[type];
+        for (const handler of handlers) {
+            handler(...params);
+        }
+    }
+
+}
+
+/**
+ * 
+ * @param canvasID 
+ */
+export function createEngine(canvasID?: string) : [EntityEngine, Entities, _SpriteSheets] {
+    const engine = new EntityEngine();
+    const entities = engine.Entities;
+    const spriteSheets = engine.SpriteSheets;
+    if (canvasID) {
+        engine.AttachToCanvas(canvasID);
+    }
+    return [
+        engine, entities, spriteSheets
+    ];
+}
+
+interface EventLists {
+    [key: string]: Array<(...args: any[]) => void>;
 }

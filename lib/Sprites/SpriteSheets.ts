@@ -26,10 +26,40 @@ export const SpriteSheets = {
     },
 
     Load(): Promise<void[]> {
-        const spriteSheetLoaders = SpriteSheetList.map((spriteSheet) => { 
-            const loader = spriteSheet.Load();
-            return loader;
-        });
+        const spriteSheetLoaders = SpriteSheetList.map((spriteSheet) => spriteSheet.Load());
         return Promise.all(spriteSheetLoaders);
     }
+}
+
+export class _SpriteSheets {
+
+    private readonly _list: Array<SpriteSheet> = [];
+
+    public Register(spriteSheet: SpriteSheet) {
+        const doesSpriteSheetExist = (this.Find(spriteSheet.ID) != undefined);
+        if (doesSpriteSheetExist == false) {
+            this._list.push(spriteSheet);
+        }
+        else {
+            throw new Error(`Can not register "${spriteSheet.ID}"; a SpriteSheet with the same name already exists.`);
+        }
+    }
+
+    public Find(id: string) {
+        const searchedSpriteSheet = this._list.find(element => element.ID == id);
+        return searchedSpriteSheet;
+    }
+
+    public Destroy(id: string) {
+        const index = this._list.findIndex(element => element.ID == id);
+        if (index != -1) {
+            this._list.splice(index, 1);
+        }
+    }
+
+    public LoadAll(): Promise<void[]> {
+        const spriteSheetLoaders = this._list.map((spriteSheet) => spriteSheet.Load());
+        return Promise.all(spriteSheetLoaders);
+    }
+
 }

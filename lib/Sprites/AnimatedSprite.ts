@@ -25,3 +25,5 @@ export default class AnimatedSprite extends Sprite {
         }
     }
 }
+
+export const DEBUG_ANIMATED_SPRITE = new AnimatedSprite("DEBUG_ANIMATED_SPRITE", 250, ["#ff0000", "#00ff00", "#0000ff"]);

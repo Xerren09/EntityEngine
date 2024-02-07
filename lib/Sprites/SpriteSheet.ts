@@ -1,4 +1,4 @@
-import { rectSize, vector2D } from "../Types/Types";
+import { ReadonlyVector2D, rectSize, vector2D } from "../Types/Types";
 
 export default class SpriteSheet
 {
@@ -17,7 +17,11 @@ export default class SpriteSheet
     get TileSize() {
         return this._tileSize;
     }
-    public readonly IndexMatrix: Array<vector2D> = [];
+    private _indices: Array<vector2D> = [];
+    public get IndexMatrix(): ReadonlyArray<ReadonlyVector2D>
+    { 
+        return this._indices;
+    }
 
     /**
      * Create a new SpriteSheet instance.
@@ -27,7 +31,7 @@ export default class SpriteSheet
     constructor(id: string, source: string, tileSize: rectSize) {
         this.ID = id;
         this._source = source;
-        // Anything below zero turns the proprocesor into a memory bomb.
+        // Anything below zero turns the preprocesor into a memory bomb.
         if (tileSize.width <= 0) {
             tileSize.width = 1;
         }
@@ -39,32 +43,31 @@ export default class SpriteSheet
 
     /**
      * Loads the Spritesheet image.
-     *
      */
     public async Load() {
-        // Await loading the image
-        this.Image.decode().then(() => {
+        this.Image.src = this._source;
+        try {
+            await this.Image.decode();
             this._height = this.Image.height;
             this._width = this.Image.width;
             this.Indexer();
-        }).catch((encodingError) => {
-            console.error("Error while loading spritesheet: " + encodingError);
-            throw encodingError;
-        });
-        this.Image.src = this._source;
+        }
+        catch (e) {
+            console.error("Error while loading spritesheet: " + e);
+        }        
     }
 
     /**
      * Gets the coordinates of the sprite at the given index.
      * @param index
      */
-    public GetSpriteCoordinates(index: number): vector2D {
-        if (index >= this.IndexMatrix.length) {
+    public GetSpriteCoordinates(index: number): ReadonlyVector2D {
+        if (index >= this._indices.length) {
             console.warn(`Index ${index} is outside the bounds of SpriteSheet ${this.ID}.`);
             return { x: -1, y: -1 };
         }
         else {
-            return this.IndexMatrix[index];
+            return this._indices[index];
         }
     }
 
@@ -94,7 +97,7 @@ export default class SpriteSheet
              * rowIndex = y,
              * columnIndex = x
              */
-            this.IndexMatrix.push({ x: index_column, y: index_row });
+            this._indices.push({ x: index_column, y: index_row });
         }
     }
 };
