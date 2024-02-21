@@ -1,5 +1,5 @@
 import { Collider } from "./index.js";
-import { rect2d, rectSize, vector2D } from "../../../Types/Types.js";
+import { rect2D, rectSize, vector2D } from "../../../Types/Types.js";
 import Entity from "../../Entity.js";
 import { __overlap } from "../Collision.js";
 import { Vector2D } from "../../Math/Vector2D.js";
@@ -12,7 +12,7 @@ export class RectCollider extends Collider {
         super(size, offset);
     }
 
-    public isOversecting(target: Entity): boolean {
+    public isIntersecting(target: Entity): boolean {
         if (target.Collider === undefined)
             return false;
         
@@ -30,7 +30,7 @@ export class RectCollider extends Collider {
         return false;
     }
 
-    public resolve(): rect2d {
+    public resolve(): rect2D {
         const point: vector2D = this.position;
         const vertexOffset: rectSize = { width: this.rectSize.width / 2, height: this.rectSize.height / 2 };
         const vertices = [
@@ -58,6 +58,7 @@ export class RectCollider extends Collider {
     }
 }
 
+// TODO: move to Renderer
 /**
  * Calculates coordinates of a rectange's vertices around a given center point.
  * @param size 

@@ -46,10 +46,10 @@ export class CapsuleCollider extends Collider {
     public resolve() {
         throw new Error("Method not implemented.");
     }
-    public isOversecting(target: Entity): boolean {
+    public isIntersecting(target: Entity): boolean {
         throw new Error("Method not implemented.");
     }
     constructor(parent: Entity) {
-        super(parent);
+        super();
     }
 }

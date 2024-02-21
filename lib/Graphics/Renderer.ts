@@ -1,207 +1,143 @@
-import { Entities } from '../Entities/Entities.js';
+import { EntityManager } from '../Entities/Entities.js';
 import Entity from '../Entities/Entity.js';
 import { CalculateRectangleAroundPoint, RectCollider } from '../Entities/Collision/Colliders/Rectangle.js';
 import AnimatedSprite from '../Sprites/AnimatedSprite.js';
 import Sprite from '../Sprites/Sprite.js';
-import { SpriteSheets } from '../Sprites/SpriteSheets.js';
-import { rectSize, vector2D } from '../Types/Types.js';
-import CanvasRenderer from './CanvasRenderer.js';
+import { HexColor, rectSize, vector2D } from '../Types/Types.js';
+import { CanvasRenderer } from './CanvasRenderer.js';
 import { CircleCollider } from '../Entities/Collision/Colliders/Circle.js';
 
-export default function Render(renderer: CanvasRenderer) {
-    // Clear canvas
-    renderer.Context.clearRect(0, 0, renderer.Canvas.width, renderer.Canvas.height);
-    renderer.ShadowContext.clearRect(0, 0, renderer.Canvas.width, renderer.Canvas.height);
+export default function Render(renderer: CanvasRenderer, entities: EntityManager) {
+    /**
+     * The main rendering context, belonging to the renderer's attached canvas.
+     */
+    const ctx = renderer.context;
+    ctx.clearRect(0, 0, renderer.canvas.width, renderer.canvas.height);
+    drawCircle(ctx, {x: 0, y:0}, 50, "#FFFFFF");
     //
-    const eCtx = renderer.ShadowContext;
-    const mCtx = renderer.Context;
-    //
-    const entities = Entities.List;
-    for (const entity of entities) {
-        // Get sprite's data
-        const entitySprite = entity.Sprite;
-        const entitySpriteSheet = SpriteSheets.Find(entitySprite.SpriteSheetID);
-
-        let tileSize = entity.Sprite.TileSize;
-        // Get the object's width and height in terms of number of segments
-        let objectColumnNumber = Math.floor(entity.Size.width / tileSize.width);
-        let objectRowNumber = Math.floor(entity.Size.height / tileSize.height);
-        const _rectangeCoords = CalculateRectangleAroundPoint(entity.Size,(entity.Rotation !== 0 ? { x: 0, y: 0 } : entity.Position));
-        if (entity.Rotation !== 0) {
-            eCtx.save();
-            eCtx.translate(entity.Position.x, entity.Position.y);
-            eCtx.rotate((entity.Rotation * Math.PI) / 180.0);
-        }
-        // Loop through every row of the object's height
-        for (let heightIndex = 0; heightIndex < (objectRowNumber); heightIndex++) {
-            let spriteRenderPositionY = (_rectangeCoords[0].y) + (heightIndex * tileSize.height);
-            // Loop through every column of the object's width
-            for (let widthIndex = 0; widthIndex < (objectColumnNumber); widthIndex++) {
-                let spriteRenderPositionX = (_rectangeCoords[0].x) + (widthIndex * tileSize.width);
-                // Get the sprite segment to be rendered
-                let spriteValue = GetEntitySpriteValue(entity, widthIndex);
-                // TODO: crop sprite size if it is outside the bounds of the entity
-                // TODO: Add complex shape rendering, so sprites are cut to fit the vertices (even if the sprite is a rectangle, cut it to fit a triangle)
-                if (typeof spriteValue === "string") {
-                    // If element is single colour, render it as a simple square
-                    eCtx.beginPath();
-                    eCtx.rect(spriteRenderPositionX, spriteRenderPositionY, tileSize.width, tileSize.height);
-                    eCtx.fillStyle = spriteValue;
-                    eCtx.fill();
-                    eCtx.closePath();
-                }
-                else if (typeof spriteValue === "number") {
-                    // If element is a spritesheet index, render it as an image
-                    let spriteLocation = entitySpriteSheet.GetSpriteCoordinates(spriteValue);
-                    eCtx.drawImage(
-                        entitySpriteSheet.Image,
-                        spriteLocation.x,
-                        spriteLocation.y,
-                        tileSize.width,
-                        tileSize.height,
-                        spriteRenderPositionX,
-                        spriteRenderPositionY,
-                        tileSize.width,
-                        tileSize.height
-                    );
-                }
-            }
-        }
-        // TODO: respect renderer.options
-        
-        if (renderer.options.drawEntityBounds) {
+    //const entities_safe = [...entities.List];
+    for (const entity of entities.List) {
+        if (entity.Sprite) {
+            //
+            ctx.save();
+            //
+            const sprite = entity.Sprite;
+            const alpha = sprite.opacity;
+            //
+            const renderSize = entity.Size;
+            //
+            ctx.globalAlpha = alpha;
+            // Calculate rectangle in real world space if no rotation is applied, otherwise use canvas 0,0
+            const renderOrigin: vector2D = {
+                x: (entity.Rotation !== 0 ? 0 : entity.Position.x) - (renderSize.width / 2),
+                y: (entity.Rotation !== 0 ? 0 : entity.Position.y) - (renderSize.height / 2)
+            };
+            // If the object is rotated, rotate the canvas and then move its origin to the object's coordinates
             if (entity.Rotation !== 0) {
-                RenderDebugShapeOutline(_rectangeCoords, { x: 0, y: 0}, eCtx);
+                ctx.translate(entity.Position.x, entity.Position.y);
+                ctx.rotate((entity.Rotation * Math.PI) / 180.0);
             }
-            else {
-                RenderDebugShapeOutline(_rectangeCoords, entity.Position, eCtx);
-            }
+            ctx.translate(renderOrigin.x, renderOrigin.y);
+            ctx.fillStyle = sprite._content;
+            ctx.fillRect(0, 0, renderSize.width, renderSize.height);
+            ctx.restore();
         }
-        if (entity.Rotation !== 0) {
-            eCtx.restore();
-        }
-        // Transfer frame from shadow canvas to main
-        let frame = eCtx.canvas.transferToImageBitmap();
-        mCtx.drawImage(
-            frame,
-            0,
-            0,
-            frame.width,
-            frame.height,
-            0,
-            0,
-            renderer.Canvas.width,
-            renderer.Canvas.height
-        );
-        frame.close();
-        if (renderer.options.drawColliders) {
-            if (entity.Rotation !== 0) {
-                RenderCollider(entity,{ x: 0, y: 0}, mCtx);
-            }
-            else {
-                RenderCollider(entity, entity.Position, mCtx);
-            }
-        }
-        //
-        /*
-        renderer.Context.beginPath();
-        renderer.Context.arc(entity.Position.x, entity.Position.y, 2, 0, 360);
-        renderer.Context.fillStyle = "#FF00FF";
-        renderer.Context.fill();
-        renderer.Context.closePath();
-        */   
     }
+    // Run debug markers
+    if (
+        renderer.options.drawEntityBounds ||
+        renderer.options.drawColliders
+    ) {
+        for (const entity of entities.List) {
+            const renderPosition = entity.Rotation !== 0 ? { x: 0, y: 0 } : entity.Position;
+            if (renderer.options.drawEntityBounds) {
+                RenderDebugShapeOutline(CalculateRectangleAroundPoint(entity.Size, renderPosition), renderPosition, ctx);
+            }
+            if (renderer.options.drawColliders) {
+                RenderDebugColliderOutline(entity, renderPosition, ctx);
+            } 
+        }
+    }  
 }
 
-function GetEntityRenderTileSize(entity: Entity): rectSize
+function getSpriteValue(sprite: Sprite, index: number): number | string
 {
-    // TODO: replace entity.Size with a proper tileSize
-    if (entity.Sprite.SpriteSheetID === "") {
-        return entity.Size;
-    }
-    else {
-        let entitySpriteSheet = SpriteSheets.Find(entity.Sprite.SpriteSheetID);
-        return entitySpriteSheet.TileSize;
-    }
-} 
-
-function GetEntitySpriteValue(entity: Entity, index: number): number | string
-{
-    if (("Speed" in entity.Sprite)) {
-        // Animated sprite
-        return (<AnimatedSprite>entity.Sprite).Value;
+    if ((sprite instanceof AnimatedSprite)) {
+        return sprite.value;
     }
     else {
         // Normal sprite
-        let sprite = <Sprite>entity.Sprite;
-        // Index of item (can wrap around freely)
-        let spriteIndex = index % sprite.Contents.length;
-        return sprite.Contents[spriteIndex];
+        // Wrap index around to repeat pattern
+        let spriteIndex = index % sprite.content.length;
+        return sprite.content[spriteIndex];
     }
 }
 
 function RenderDebugShapeOutline(vertices: ReadonlyArray<vector2D>, position: vector2D, ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) {
     // Render center point
-    ctx.beginPath();
-    ctx.arc(position.x, position.y, 3, 0, 360);
-    ctx.fillStyle = "#FF00FF";
-    ctx.fill();
-    ctx.closePath();
-    ctx.beginPath();
+
+    drawCircle(ctx, position, 4, "#FF00FF");
+    
     // Render edges
     for (let index = 0; index < vertices.length; index++) {
         const current = vertices[index];
         const next = vertices[(index + 1) % (vertices.length)];
         // Render vertex
-        ctx.arc(current.x, current.y, 3, 0, 360);
-        ctx.fillStyle = "#FF00FF";
-        ctx.fill();
+        drawCircle(ctx, current, 4, "#FF00FF");
         // Render edge
+        ctx.beginPath();
         ctx.lineWidth = 2;
         ctx.strokeStyle = "#FF00FF";
         ctx.moveTo(current.x, current.y);
         ctx.lineTo(next.x, next.y);
         ctx.stroke();
+        ctx.closePath();
     }
-    ctx.closePath();
 }
 
-function RenderCollider(target: Entity, position: vector2D, ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) {
+function RenderDebugColliderOutline(target: Entity, position: vector2D, ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) {
     if (target.Collider === undefined)
         return;
 
+    drawCircle(ctx, target.Collider.position, 2, "#00FF00");
     if (target.Collider instanceof CircleCollider) {
-        ctx.beginPath();
-        ctx.strokeStyle = "#00FF00";
-        ctx.arc(target.Collider.position.x, target.Collider.position.y, target.Collider.radius, 0, 360);
-        ctx.stroke();
-        ctx.closePath();
-        ctx.beginPath();
-        ctx.arc(target.Collider.position.x, target.Collider.position.y, 3, 0, 360);
-        ctx.fill();
-        ctx.closePath();
+        drawCircle(ctx, target.Collider.position, target.Collider.radius, "#00FF00", false);
+        
     }
 
     if (target.Collider instanceof RectCollider) {
         const rect = target.Collider.resolve();
-        ctx.beginPath();
+        
         // Render edges
         for (let index = 0; index < rect.vertices.length; index++) {
             const current = rect.vertices[index];
             const next = rect.vertices[(index + 1) % (rect.vertices.length)];
             // Render vertex
-            ctx.arc(current.x, current.y, 3, 0, 360);
-            ctx.fillStyle = "#00FF00";
-            ctx.fill();
+            drawCircle(ctx, current, 2, "#00FF00");
             // Render edge
-            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.lineWidth = 1;
             ctx.strokeStyle = "#00FF00";
             ctx.moveTo(current.x, current.y);
             ctx.lineTo(next.x, next.y);
             ctx.stroke();
+            ctx.closePath();
         }
-        ctx.closePath();
+        
     }
+}
 
-    
+//
+function drawCircle(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pos: vector2D, radius: number, colour: HexColor, fill: boolean = true) {
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, radius, 0, 360);
+    if (fill) {
+        ctx.fillStyle = colour;
+        ctx.fill();
+    }
+    else {
+        ctx.strokeStyle = colour;
+        ctx.stroke();
+    }
+    ctx.closePath();
 }

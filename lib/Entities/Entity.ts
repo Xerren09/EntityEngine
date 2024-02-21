@@ -3,19 +3,23 @@ import Sprite from '../Sprites/Sprite.js';
 import { rectSize, vector2D } from '../Types/Types.js';
 import { Collider } from './Collision/Colliders/index.js';
 import { GetCollisionsByTag } from './Collision/Collision.js';
-import { Entities } from './Entities.js';
 
 export default class Entity {
     public readonly ID: string;
     public Tags: string[] = [];
     public Position: vector2D = { x: 0, y: 0 };
+
     private _collider?: Collider;
     public get Collider(): undefined | Collider {
         return this._collider;
     }
     public set Collider(value: Collider) {
+        // Detach from previous parent
+        if (value["_parent"]) {
+            value["_parent"].Collider = undefined;
+        }
+        value["_parent"] = this;
         this._collider = value;
-        this._collider.setParent(this);
     }
     // TODO: scale sprite to this size
     private _size: rectSize = { width: 0, height: 0 };
@@ -25,8 +29,8 @@ export default class Entity {
     }
     public set Size(val: rectSize) {
         this._size = val;
-        // TODO: update collider if any
     }
+
     public get Vertices(): ReadonlyArray<vector2D> {
         return [
             {
@@ -56,12 +60,16 @@ export default class Entity {
         this._rotation = val % 360;
     }
     
-    public Sprite: Sprite | AnimatedSprite;
+    public Sprite?: Sprite | AnimatedSprite;
 
     constructor(id: string) {
         this.ID = id;
     }
 
+    /**
+     * Moves the entity by the given vector.
+     * @param vector 
+     */
     public Translate(vector: vector2D) {
         if (isNaN(vector.x)) {
             vector.x = 0;
@@ -73,6 +81,18 @@ export default class Entity {
         this.Position.y += vector.y;
     }
 
+    /**
+     * Moves the entity towards a given point, by the specified amount per call.
+     * 
+     * To smoothly move the entity at a constant speed, multiply the step value with time.delta:
+     * 
+     * ```js
+     * const step = 10;
+     * entity.MoveTowards(targetPoint, step * time.delta);
+     * ```
+     * @param targetCoordinates 
+     * @param step The number of pixels the entity should move per call.
+     */
     public MoveTowards(targetCoordinates: vector2D, step: number) {
         const distanceVector: vector2D = {
             x: targetCoordinates.x - (this.Position.x),
@@ -109,8 +129,4 @@ export default class Entity {
         Entities.Destroy(this.ID);
     }
     */
-}
-
-interface RenderOptions {
-    
 }

@@ -1,6 +1,6 @@
 import Entity from "./Entity.js";
 
-export class Entities {
+export class EntityManager {
     private _list: Array<Entity> = [];
 
     public get List() {
@@ -68,7 +68,7 @@ export class Entities {
     }
 
     /**
-     * Destroys all entities currently known the engine.
+     * De-registers all entities currently known to the engine.
      */
     public Wipe() {
         this._list.length = 0;

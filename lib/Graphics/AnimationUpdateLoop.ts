@@ -1,13 +1,12 @@
-import { Entities } from "../Entities/Entities.js";
+import { EntityManager } from "../Entities/Entities.js";
 import AnimatedSprite from "../Sprites/AnimatedSprite.js";
 
-export default function AnimationUpdateLoop() {
-    const entities = Entities.List;
-    for (const entity of entities) {
+export default function AnimationUpdateLoop(entities: EntityManager) {
+    for (const entity of entities.List) {
         const sprite = entity.Sprite;
         // If the sprite is animated, run the next update
-        if ("Speed" in sprite) {
-            (<AnimatedSprite>sprite).Next();
+        if (sprite instanceof AnimatedSprite) {
+            sprite["Next"]();
         }
     }
 }

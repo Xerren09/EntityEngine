@@ -1,29 +1,40 @@
+import { HexColor } from "../Types/Types.js";
 import Sprite from "./Sprite.js";
+import SpriteSheet from "./SpriteSheet.js";
 
 export default class AnimatedSprite extends Sprite {
-    public readonly Speed: number;
+    /**
+     * The interval in milliseconds this animated sprite should update at.
+     */
+    public readonly speed: number;
     private _index: number = 0;
-    public get Index() {
+    /**
+     * The index of the current frame.
+     */
+    public get index() {
         return this._index;
     }
-    public get Value() {
-        return this.Contents[this._index];
+    /**
+     * The value of the current frame.
+     */
+    public get value() {
+        return this.content[this._index];
     }
     private _lastUpdate: number = 0;
 
-    constructor(name: string, speed: number, contents: Array<string | number>, spriteSheetID: string = "") {
-        super(name, contents, spriteSheetID);
-        this.Speed = speed;
+    constructor(speed: number, frames: Array<HexColor | number>, spriteSheet?: SpriteSheet) {
+        super(frames, spriteSheet);
+        this.speed = speed;
     }
 
-    public Next() {
+    private Next() {
         const timeElapsedSinceUpdate = performance.now() - this._lastUpdate;
-        if (timeElapsedSinceUpdate >= this.Speed) {
+        if (timeElapsedSinceUpdate >= this.speed) {
             const currentIndex = this._index;
-            this._index = (currentIndex + 1) % this.Contents.length;
+            this._index = (currentIndex + 1) % this.content.length;
             this._lastUpdate = performance.now();
         }
     }
 }
 
-export const DEBUG_ANIMATED_SPRITE = new AnimatedSprite("DEBUG_ANIMATED_SPRITE", 250, ["#ff0000", "#00ff00", "#0000ff"]);
+export const DEBUG_ANIMATED_SPRITE = new AnimatedSprite(250, ["#ff0000", "#00ff00", "#0000ff"]);

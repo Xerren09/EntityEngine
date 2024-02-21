@@ -2,8 +2,6 @@ import { ReadonlyRectSize, ReadonlyVector2D, rectSize, vector2D } from "../../..
 import Entity from "../../Entity.js"
 import { Distance } from "../../Math/Vector2D.js";
 
-export type Shapes = 'rect' | 'circle' | 'capsule'
-
 export abstract class Collider {
     protected _parent: Entity;
     private _rectSize: rectSize = { width: 0, height: 0 };
@@ -16,7 +14,7 @@ export abstract class Collider {
 
     private _offset: vector2D = { x: 0, y: 0 };
     /**
-     * The offset of the shape from the given point during {@link calc}.
+     * The offset of the center of the collider from the attached Entity's position.
      */
     public get offset(): ReadonlyVector2D {
         return { ...this._offset };
@@ -44,10 +42,6 @@ export abstract class Collider {
             this.setOffset(offset);
     }
 
-    public setParent(parent: Entity) {
-        this._parent = parent;
-    }
-
     public setOffset(offset: vector2D) {
         this._offset = { ...offset };
     }
@@ -69,7 +63,7 @@ export abstract class Collider {
         return (distance >= (this._boundingCircleRadius + target._boundingCircleRadius));
     }
 
-    public abstract isOversecting(target: Entity): boolean
+    public abstract isIntersecting(target: Entity): boolean
 
     public abstract resolve(): any
 }

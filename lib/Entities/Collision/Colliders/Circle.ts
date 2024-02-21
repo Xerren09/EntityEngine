@@ -1,21 +1,21 @@
 import { Collider } from "./index.js";
-import { ReadonlyVector2D, circle2D, rect2d, rectSize, vector2D } from "../../../Types/Types.js";
+import { ReadonlyVector2D, circle2D, rect2D, rectSize, vector2D } from "../../../Types/Types.js";
 import Entity from "../../Entity.js";
-import { Distance, Equals, Subtract, Vector2D, pDistance } from "../../Math/Vector2D.js";
+import { Distance, Equals, Subtract, Vector2D } from "../../Math/Vector2D.js";
 import { RectCollider } from "./Rectangle.js";
 import { __isLeft } from "../Collision.js";
 
 export type CircleShape = ReadonlyArray<circle2D>;
 
 export class CircleCollider extends Collider {
-    private _radius: number = 0;
+    private _radius: number = 5;
     public get radius() {
         return this._radius;
     }
 
     constructor(radius?: number, offset?: vector2D) {
         if (radius === undefined)
-            radius = 0;
+            radius = 5;
         const rect: rectSize = { width: radius * 2, height: radius * 2 };
         super(rect, offset);
         this.setRadius(radius);
@@ -27,7 +27,7 @@ export class CircleCollider extends Collider {
         this.setRectSize(rect);
     }
     
-    public isOversecting(target: Entity): boolean {
+    public isIntersecting(target: Entity): boolean {
         if (target.Collider === undefined)
             return false;
 
@@ -73,7 +73,7 @@ function checkCircleIntersect(a: circle2D, b: circle2D): boolean {
     return false;
 }
 
-function checkCircleRectIntersect(a: circle2D, b: rect2d): boolean {
+function checkCircleRectIntersect(a: circle2D, b: rect2D): boolean {
     let isInsideRect: boolean = true;
     let isWithinRadius: boolean = false;
     for (let index = 0; index < b.vertices.length; index++) {
@@ -92,8 +92,9 @@ function checkCircleRectIntersect(a: circle2D, b: rect2d): boolean {
     return (isWithinRadius);
 }
 
-function sqr(x: number) { return x * x }
-function dist2(v: vector2D, w: vector2D) { return sqr(v.x - w.x) + sqr(v.y - w.y) }
+function dist2(v: vector2D, w: vector2D) {
+    return Math.pow(v.x - w.x, 2) + Math.pow(v.y - w.y, 2)
+}
 function distToSegmentSquared(p: vector2D, v: vector2D, w: vector2D) {
     var l2 = dist2(v, w);
     if (l2 == 0)
@@ -105,4 +106,7 @@ function distToSegmentSquared(p: vector2D, v: vector2D, w: vector2D) {
         y: v.y + t * (w.y - v.y)
     });
 }
-function distToSegment(p: vector2D, v: vector2D, w: vector2D) { return Math.sqrt(distToSegmentSquared(p, v, w)); }
+function distToSegment(p: vector2D, v: vector2D, w: vector2D) {
+
+    return Math.sqrt(distToSegmentSquared(p, v, w));
+}

@@ -32,7 +32,12 @@ export type circle2D = {
     radius: number;
 }
 
-export type rect2d = {
+/**
+ * Used to represent a 2D rectangle
+ */
+export type rect2D = {
     position: vector2D;
     vertices: vector2D[];
 }
+
+export type HexColor = `#${string}`;
