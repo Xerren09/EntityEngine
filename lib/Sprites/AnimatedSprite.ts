@@ -1,10 +1,10 @@
-import { HexColor } from "../Types/Types.js";
-import Sprite from "./Sprite.js";
+import { HexColor, rectSize } from "../Types/Types.js";
+import { TextureResource } from "./Sprite.js";
 import SpriteSheet from "./SpriteSheet.js";
 
-export default class AnimatedSprite extends Sprite {
+export default class AnimatedSprite extends TextureResource {
     /**
-     * The interval in milliseconds this animated sprite should update at.
+     * The interval in milliseconds this animated sprite will update at.
      */
     public readonly speed: number;
     private _index: number = 0;
@@ -15,26 +15,42 @@ export default class AnimatedSprite extends Sprite {
         return this._index;
     }
     /**
-     * The value of the current frame.
+     * The number of frames in this animated sprite.
      */
-    public get value() {
-        return this.content[this._index];
+    public get length() {
+        return this._frames.length;
+    }
+    /**
+     * The current frame of the animated sprite. Same as the value.
+     */
+    public get currentFrame() {
+        return this._frames[this._index];
     }
     private _lastUpdate: number = 0;
+    private _frames: Array<CanvasPattern> = [];
 
-    constructor(speed: number, frames: Array<HexColor | number>, spriteSheet?: SpriteSheet) {
-        super(frames, spriteSheet);
+    /**
+     * 
+     * @param speed The interval in milliseconds this animated sprite should update at.
+     * @param frames 
+     * @param tileSize The size of the segments should be rendered at.
+     * @param spriteSheet The source spritesheet. This is only required if the content array contains numbers, which behave as a spritesheet tile index.
+     */
+    constructor(speed: number, frames: Array<HexColor | number>, tileSize: rectSize, spriteSheet?: SpriteSheet) {
+        super(frames, tileSize, spriteSheet);
         this.speed = speed;
+        this._frames = frames.map(frame => this.compile([frame], tileSize));
+        this._value = this._frames[0];
     }
 
-    private Next() {
+    private nextFrame() {
         const timeElapsedSinceUpdate = performance.now() - this._lastUpdate;
         if (timeElapsedSinceUpdate >= this.speed) {
             const currentIndex = this._index;
-            this._index = (currentIndex + 1) % this.content.length;
+            this._index = (currentIndex + 1) % this._frames.length;
             this._lastUpdate = performance.now();
         }
     }
 }
 
-export const DEBUG_ANIMATED_SPRITE = new AnimatedSprite(250, ["#ff0000", "#00ff00", "#0000ff"]);
+export const DEBUG_ANIMATED_SPRITE = new AnimatedSprite(250, ["#ff0000", "#00ff00", "#0000ff"], { width: 5, height: 5});

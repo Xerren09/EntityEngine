@@ -19,8 +19,8 @@ const spriteSheet = new SpriteSheet("spritesheet.png", { width: 25, height: 25 }
 engine.addEventListener("awake", () => {
     console.log("awake event");
     //
-    const demoSprite = new Sprite(["#FF00FF"]);
-    const demoSpliceSprite = new Sprite([1, 2, 3, 4, 5], spriteSheet);
+    const demoSprite = new Sprite(["#FF00FF"], { width: 25, height: 25 });
+    const demoSpliceSprite = new Sprite([1, 2, 3, 4, 5], { width: 25, height: 25 }, spriteSheet);
     //
     block = new Entity("block");
     block.Size = { width: 150, height: 25 };

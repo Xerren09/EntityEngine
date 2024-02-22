@@ -6,7 +6,7 @@ export default function AnimationUpdateLoop(entities: EntityManager) {
         const sprite = entity.Sprite;
         // If the sprite is animated, run the next update
         if (sprite instanceof AnimatedSprite) {
-            sprite["Next"]();
+            sprite["nextFrame"]();
         }
     }
 }

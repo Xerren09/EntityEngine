@@ -38,7 +38,7 @@ export default function Render(renderer: CanvasRenderer, entities: EntityManager
                 ctx.rotate((entity.Rotation * Math.PI) / 180.0);
             }
             ctx.translate(renderOrigin.x, renderOrigin.y);
-            ctx.fillStyle = sprite._content;
+            ctx.fillStyle = sprite.value;
             ctx.fillRect(0, 0, renderSize.width, renderSize.height);
             ctx.restore();
         }
@@ -58,19 +58,6 @@ export default function Render(renderer: CanvasRenderer, entities: EntityManager
             } 
         }
     }  
-}
-
-function getSpriteValue(sprite: Sprite, index: number): number | string
-{
-    if ((sprite instanceof AnimatedSprite)) {
-        return sprite.value;
-    }
-    else {
-        // Normal sprite
-        // Wrap index around to repeat pattern
-        let spriteIndex = index % sprite.content.length;
-        return sprite.content[spriteIndex];
-    }
 }
 
 function RenderDebugShapeOutline(vertices: ReadonlyArray<vector2D>, position: vector2D, ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) {
