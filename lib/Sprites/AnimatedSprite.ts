@@ -1,6 +1,6 @@
 import { HexColor, rectSize } from "../Types/Types.js";
-import { TextureResource } from "./Sprite.js";
 import SpriteSheet from "./SpriteSheet.js";
+import { TextureResource } from "./TextureResource.js";
 
 export default class AnimatedSprite extends TextureResource {
     /**
@@ -32,7 +32,7 @@ export default class AnimatedSprite extends TextureResource {
     /**
      * 
      * @param speed The interval in milliseconds this animated sprite should update at.
-     * @param frames 
+     * @param frames
      * @param tileSize The size of the segments should be rendered at.
      * @param spriteSheet The source spritesheet. This is only required if the content array contains numbers, which behave as a spritesheet tile index.
      */
@@ -43,11 +43,15 @@ export default class AnimatedSprite extends TextureResource {
         this._value = this._frames[0];
     }
 
+    /**
+     * Advances the animation to the next frame, if enough time has elapsed.
+     */
     private nextFrame() {
         const timeElapsedSinceUpdate = performance.now() - this._lastUpdate;
         if (timeElapsedSinceUpdate >= this.speed) {
             const currentIndex = this._index;
             this._index = (currentIndex + 1) % this._frames.length;
+            this._value = this._frames[this._index];
             this._lastUpdate = performance.now();
         }
     }
