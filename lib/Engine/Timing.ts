@@ -106,5 +106,5 @@ export class EngineTime {
 }
 
 EngineTime.prototype.valueOf = function () {
-    return this.seconds;
+    return this.delta;
 }
