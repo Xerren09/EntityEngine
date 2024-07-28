@@ -8,6 +8,7 @@ import { CanvasRenderer } from './CanvasRenderer.js';
 import { CircleCollider } from '../Entities/Collision/Colliders/Circle.js';
 
 export default function Render(renderer: CanvasRenderer, entities: EntityManager) {
+    renderer.context.resetTransform();
     /**
      * The main rendering context, belonging to the renderer's attached canvas.
      */
