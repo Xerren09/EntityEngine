@@ -61,10 +61,10 @@ engine.addEventListener("update", (time) => {
     player.Rotation += rot;
     player.Size.height += (10 * time.delta);
     //console.log(player.Collider.isOversecting(block));
-    if (circle.Collider.isIntersecting(player)) {
+    if (circle.IsIntersecting(player)) {
         console.log(`Collision with ${circle.ID}`);
     }
-    if (player.Collider.isIntersecting(block)) {
+    if (player.IsIntersecting(block)) {
         console.log(`Collision with ${block.ID}`);
     }
     console.log(time.lastRenderTime);

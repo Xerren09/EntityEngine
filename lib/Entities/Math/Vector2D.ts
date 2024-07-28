@@ -38,6 +38,7 @@ export class Vector2D {
     }
 
     public static distance(start: vector2D, end: vector2D): number {
+        // Do not use Math.hypot, it is extremely slow on 
         const x = (start.x - end.x);
         const y = (start.y - end.y);
         return Math.sqrt((x*x) + (y*y));
@@ -55,7 +56,7 @@ export class Vector2D {
         };
     }
 
-    public static subtract(v1: vector2D, v2: vector2D): vector2D {
+    public static vector(v1: vector2D, v2: vector2D): vector2D {
         const v3: vector2D = {
             x: v1.x - (v2.x),
             y: v1.y - (v2.y)

@@ -1,6 +1,6 @@
 import { EntityManager } from '../Entities/Entities.js';
 import Entity from '../Entities/Entity.js';
-import { CalculateRectangleAroundPoint, RectCollider } from '../Entities/Collision/Colliders/Rectangle.js';
+import { RectangleShape, RectCollider } from '../Entities/Collision/Colliders/Rectangle.js';
 import AnimatedSprite from '../Sprites/AnimatedSprite.js';
 import Sprite from '../Sprites/Sprite.js';
 import { HexColor, rectSize, vector2D } from '../Types/Types.js';
@@ -14,9 +14,7 @@ export default function Render(renderer: CanvasRenderer, entities: EntityManager
      */
     const ctx = renderer.context;
     ctx.clearRect(0, 0, renderer.canvas.width, renderer.canvas.height);
-    drawCircle(ctx, {x: 0, y:0}, 50, "#FFFFFF");
     //
-    //const entities_safe = [...entities.List];
     for (const entity of entities.List) {
         if (entity.Sprite) {
             //
@@ -87,14 +85,14 @@ function RenderDebugColliderOutline(target: Entity, position: vector2D, ctx: Can
     if (target.Collider === undefined)
         return;
 
-    drawCircle(ctx, target.Collider.position, 2, "#00FF00");
+    drawCircle(ctx, target.Position, 2, "#00FF00");
     if (target.Collider instanceof CircleCollider) {
-        drawCircle(ctx, target.Collider.position, target.Collider.radius, "#00FF00", false);
+        drawCircle(ctx, target.Position, target.Collider.radius, "#00FF00", false);
         
     }
 
     if (target.Collider instanceof RectCollider) {
-        const rect = target.Collider.resolve();
+        const rect = target.Collider["resolve"](target);
         
         // Render edges
         for (let index = 0; index < rect.vertices.length; index++) {
@@ -128,4 +126,31 @@ function drawCircle(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingCont
         ctx.stroke();
     }
     ctx.closePath();
+}
+
+/**
+ * Calculates coordinates of a rectange's vertices around a given center point.
+ * @param size 
+ * @param point 
+ * @returns 
+ */
+function CalculateRectangleAroundPoint(size: rectSize, point: vector2D): RectangleShape {
+    return [
+        {
+            x: point.x - (size.width / 2),
+            y: point.y - (size.height / 2)
+        } as const,
+        {
+            x: point.x + (size.width / 2),
+            y: point.y - (size.height / 2)
+        } as const,
+        {
+            x: point.x + (size.width / 2),
+            y: point.y + (size.height / 2)
+        } as const,
+        {
+            x: point.x - (size.width / 2),
+            y: point.y + (size.height / 2)
+        } as const
+    ];
 }

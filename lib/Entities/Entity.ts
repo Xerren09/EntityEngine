@@ -1,29 +1,29 @@
 import AnimatedSprite from '../Sprites/AnimatedSprite.js';
 import Sprite from '../Sprites/Sprite.js';
 import { rectSize, vector2D } from '../Types/Types.js';
-import { Collider } from './Collision/Colliders/index.js';
+import { Collider, CollisionResolver } from './Collision/Colliders/Collider.js';
 import { GetCollisionsByTag } from './Collision/Collision.js';
 
 export default class Entity {
     public readonly ID: string;
     public Tags: string[] = [];
-    public Position: vector2D = { x: 0, y: 0 };
-
-    private _collider?: Collider;
-    public get Collider(): undefined | Collider {
-        return this._collider;
-    }
-    public set Collider(value: Collider) {
-        // Detach from previous parent
-        if (value["_parent"]) {
-            value["_parent"].Collider = undefined;
+    public _position: vector2D = { x: 0, y: 0 };
+    public get Position(): vector2D {
+        return {
+            x: this._position.x,
+            y: this._position.y
         }
-        value["_parent"] = this;
-        this._collider = value;
     }
-    // TODO: scale sprite to this size
-    private _size: rectSize = { width: 0, height: 0 };
+    public set Position(val: vector2D) {
+        this._position = {
+            x: val.x,
+            y: val.y
+        };
+    }
 
+    public Collider?: Collider;
+
+    private _size: rectSize = { width: 0, height: 0 };
     public get Size() {
         return this._size;
     }
@@ -110,23 +110,7 @@ export default class Entity {
         }
     }
 
-    /*
-    public GetCollisionsByTag(tags: Array<string>): Entity[] {
-        //return GetCollisionsByTag(this, tags);
-        const filtered = Entities.FindAllTagged("block");
-        const ret: Entity[] = [];
-        for (const entity of filtered) {
-            if (entity.Collider) {
-                if (entity.Collider.isOversecting(entity)) {
-                    ret.push(entity);
-                }
-            }
-        }
-        return ret;
+    public IsIntersecting(target: Entity): boolean {
+        return CollisionResolver(this, target);
     }
-
-    public Destroy() {
-        Entities.Destroy(this.ID);
-    }
-    */
 }

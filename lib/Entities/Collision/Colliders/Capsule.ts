@@ -1,4 +1,4 @@
-import { Collider } from "./index.js";
+import { Collider } from "./Collider.js";
 import { circle2D, vector2D } from "../../../Types/Types.js";
 import Entity from "../../Entity.js";
 
