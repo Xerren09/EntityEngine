@@ -11,7 +11,7 @@ export class EntityManager {
      * Registers an entity to this engine instance. Only registered entities will be rendered or can interact with eachother.
      * @param entity 
      */
-    public Register(entity: Entity) {
+    public Add(entity: Entity) {
         if (this.Find(entity.ID) === undefined) {
             this._list.push(entity);
         }
@@ -52,13 +52,13 @@ export class EntityManager {
     }
 
     /**
-     * Destroys an Entity with the given name.
+     * Removes an Entity with the given name.
      * 
      * This removes it from the list of active entities.
      * @param name 
      * @returns 
      */
-    public Destroy(name: string) : boolean {
+    public Remove(name: string) : boolean {
         let deleted: boolean = false;
         for (let index = 0; index < this._list.length; index++) {
             const element = this._list[index];

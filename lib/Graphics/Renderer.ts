@@ -3,6 +3,7 @@ import { RectCollider } from '../Entities/Collision/Colliders/Rectangle.js';
 import { HexColor, rectSize, vector2D } from '../Types/Types.js';
 import { CanvasRenderer } from './CanvasRenderer.js';
 import { CircleCollider } from '../Entities/Collision/Colliders/Circle.js';
+import AnimatedSprite from '../Sprites/AnimatedSprite.js';
 
 export default function Render(renderer: CanvasRenderer, entities: EntityManager) {
     renderer.context.resetTransform();
@@ -19,6 +20,10 @@ export default function Render(renderer: CanvasRenderer, entities: EntityManager
             //
             const sprite = entity.Sprite;
             const alpha = sprite.opacity;
+            // If the sprite is animated, run the next update
+            if (sprite instanceof AnimatedSprite) {
+                sprite["nextFrame"]();
+            }
             //
             const renderSize = entity.Size;
             //

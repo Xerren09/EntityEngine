@@ -1,5 +1,4 @@
 import { EntityManager } from "../Entities/Entities.js";
-import AnimationUpdateLoop from "../Graphics/AnimationUpdateLoop.js";
 import { CanvasRenderer } from "../Graphics/CanvasRenderer.js";
 import Render from "../Graphics/Renderer.js";
 import { EngineTime, EngineTiming } from "./Timing.js";
@@ -90,6 +89,9 @@ export default class EntityEngine {
      * Provides the Time api for `update` events.
      */
     private _delta: EngineTime = new EngineTime(this._timings);
+    public get Timing(): EngineTime {
+        return this._delta;
+    }
 
     /**
      * Wrapper for the attached HTML Canvas' draw API.
@@ -98,7 +100,7 @@ export default class EntityEngine {
     /**
      * Manages the Entities visible to the engine.
      * 
-     * In order for an Entity to be visible and active, register it via the {@link EntityManager.Register} method.
+     * In order for an Entity to be visible and active, register it via the {@link EntityManager.Add} method.
      */
     public readonly Entities: EntityManager;
 
@@ -153,8 +155,6 @@ export default class EntityEngine {
             this._timings.lastUpdateTime = performance.now() - this._timings.current;
             // Run rendering pass
             Render(this.Renderer, this.Entities);
-            // Update animated sprites after the rendering pass
-            AnimationUpdateLoop(this.Entities);
             this._timings.lastRenderTime = performance.now() - (this._timings.current + this._timings.lastUpdateTime);
             // Call `customRender` handlers
             this.dispatchEngineEvent(ENGINE_EVENTS.customRender, this.Renderer.context);

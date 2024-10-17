@@ -30,7 +30,7 @@ engine.addEventListener("awake", () => {
     block.Position = { x: 300, y: 300 };
     block.Collider = new RectCollider(block.Size);
     block.Tags.push("block");
-    engine.Entities.Register(block);
+    engine.Entities.Add(block);
     //
     circle = new Entity("circle");
     circle.Size = { width: 100, height: 100 };
@@ -39,14 +39,14 @@ engine.addEventListener("awake", () => {
     circle.Collider = new CircleCollider(50);
     circle.Tags.push("circle");
     circle.Rotation = 45;
-    engine.Entities.Register(circle);
+    engine.Entities.Add(circle);
     //
     player = new Entity("player");
     player.Size = { width: 100, height: 25 };
     player.Sprite = demoSpliceSprite;  //new AnimatedSprite(500, [1, 2, 3, 4, 5], spriteSheet); //new Sprite("testSpriteNormal", [1], "testSheet");
     player.Position = { x: 100, y: 100 };
     player.Collider = new RectCollider(player.Size);//new CircleCollider(player, 50);
-    engine.Entities.Register(player);
+    engine.Entities.Add(player);
     //
 });
 
