@@ -1,18 +1,27 @@
 import { Collider } from "./Collider.js";
 import { rect2D, rectSize, vector2D } from "../../../Types/Types.js";
 import Entity from "../../Entity.js";
-import { polyIntersect } from "../Collision.js";
-import { Vector2D } from "../../Math/Vector2D.js";
+import { polyIntersect } from "../../../Math/Collision.js";
+import { Vector2D } from "../../../Math/Vector2D.js";
 
 export type RectangleShape = ReadonlyArray<vector2D>;
 
+/**
+ * A simple rectangular collider. See {@link Collider} for more.
+ */
 export class RectCollider extends Collider {
 
-    public get Size(): rectSize {
+    /**
+     * The rect's dimensions.
+     */
+    public get size(): rectSize {
         return {
             height: this.rectSize.height,
             width: this.rectSize.width,
         };
+    }
+    public set size(value) {
+        this.setRectSize(value);
     }
 
     constructor(size?: rectSize, offset?: vector2D) {
@@ -55,7 +64,7 @@ export class RectCollider extends Collider {
     }
 }
 
-export function rotatePolygon(vertices: vector2D[], point: vector2D, angle: number): vector2D[] {
+function rotatePolygon(vertices: vector2D[], point: vector2D, angle: number): vector2D[] {
     const ret: vector2D[] = [];
     for (const vertex of vertices) {
         ret.push(Vector2D.rotate(vertex, point, angle));

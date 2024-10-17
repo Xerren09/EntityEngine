@@ -1,7 +1,7 @@
-import { EntityManager } from "../Entities.js";
-import { circle2D, rect2D, vector2D } from "../../Types/Types.js";
-import Entity from "../Entity.js";
-import { Vector2D } from "../Math/Vector2D.js";
+import { EntityManager } from "../Entities/Entities.js";
+import { circle2D, rect2D, vector2D } from "../Types/Types.js";
+import Entity from "../Entities/Entity.js";
+import { Vector2D } from "./Vector2D.js";
 
 /**
  * Gets the list of Entities with the given tag(s) that are overlapping the specified Entity.
@@ -55,7 +55,7 @@ export function polyIntersect(self: rect2D, target: rect2D) : boolean {
                 doEdgesIntersect = true;
                 break;
             }
-            if (__isLeft(a, b, c) == false) {
+            if (isLeftOfLine(a, b, c) == false) {
                 isPointWithinSelf = false;
                 break;
             }
@@ -82,7 +82,7 @@ export function polyIntersect(self: rect2D, target: rect2D) : boolean {
  * Checks if C is to the left side of the line. 
  * @returns 
  */
-export function __isLeft(a: vector2D, b: vector2D, c: vector2D): boolean {
+export function isLeftOfLine(a: vector2D, b: vector2D, c: vector2D): boolean {
     const first = (b.x - a.x) * (c.y - a.y);
     const second = (b.y - a.y) * (c.x - a.x);
     return (first > second);
@@ -100,7 +100,7 @@ export function __isLeft(a: vector2D, b: vector2D, c: vector2D): boolean {
  * ```
  */
 export function lineIntersect(a: vector2D, b: vector2D, c: vector2D, d: vector2D): boolean {
-    return (__isLeft(a, c, d) != __isLeft(b, c, d)) && (__isLeft(a, b, c) != __isLeft(a, b, d));
+    return (isLeftOfLine(a, c, d) != isLeftOfLine(b, c, d)) && (isLeftOfLine(a, b, c) != isLeftOfLine(a, b, d));
 }
 
 
@@ -124,7 +124,7 @@ export function circlePolyIntersect(a: circle2D, b: rect2D) {
     for (let index = 0; index < b.vertices.length; index++) {
         const current = b.vertices[index];
         const next = b.vertices[(index + 1) % b.vertices.length];
-        if (isInsideRect == true && __isLeft(current, next, a.position) == true) {
+        if (isInsideRect == true && isLeftOfLine(current, next, a.position) == true) {
             isInsideRect = false;
         }
         const dist = distanceToSegment(current, next, a.position);

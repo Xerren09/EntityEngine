@@ -1,4 +1,4 @@
-import { rectSize } from "../Types/Types";
+import { rectSize } from "../Types/Types.js";
 
 /**
  * Provides access to the canvas API attached to an engine instance.

@@ -1,8 +1,5 @@
 import { EntityManager } from '../Entities/Entities.js';
-import Entity from '../Entities/Entity.js';
-import { RectangleShape, RectCollider } from '../Entities/Collision/Colliders/Rectangle.js';
-import AnimatedSprite from '../Sprites/AnimatedSprite.js';
-import Sprite from '../Sprites/Sprite.js';
+import { RectCollider } from '../Entities/Collision/Colliders/Rectangle.js';
 import { HexColor, rectSize, vector2D } from '../Types/Types.js';
 import { CanvasRenderer } from './CanvasRenderer.js';
 import { CircleCollider } from '../Entities/Collision/Colliders/Circle.js';
@@ -48,73 +45,34 @@ export default function Render(renderer: CanvasRenderer, entities: EntityManager
         renderer.options.drawColliders
     ) {
         for (const entity of entities.List) {
-            const renderPosition = entity.Rotation !== 0 ? { x: 0, y: 0 } : entity.Position;
             if (renderer.options.drawEntityBounds) {
-                RenderDebugShapeOutline(CalculateRectangleAroundPoint(entity.Size, renderPosition), renderPosition, ctx);
+                drawRect(ctx, entity.Position, entity.Size, entity.Rotation, "#FF00FF", false, 2.5);
+                drawCircle(ctx, entity.Position, 2, "#FF00FF", false, 2);
             }
             if (renderer.options.drawColliders) {
-                RenderDebugColliderOutline(entity, renderPosition, ctx);
+                if (entity.Collider !== undefined) {
+                    drawCircle(ctx, entity.Position, 1, "#00FF00", false, 2);
+                    if (entity.Collider instanceof RectCollider) {
+                        drawRect(ctx, entity.Position, entity.Collider.rectSize, entity.Rotation, "#00FF00", false, 2);
+                    }
+                    else if (entity.Collider instanceof CircleCollider) {
+                        drawCircle(ctx, entity.Position, entity.Collider.radius, "#00FF00", false, 2);
+                    }
+                }
             } 
         }
     }  
 }
 
-function RenderDebugShapeOutline(vertices: ReadonlyArray<vector2D>, position: vector2D, ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) {
-    // Render center point
-
-    drawCircle(ctx, position, 4, "#FF00FF");
-    
-    // Render edges
-    for (let index = 0; index < vertices.length; index++) {
-        const current = vertices[index];
-        const next = vertices[(index + 1) % (vertices.length)];
-        // Render vertex
-        drawCircle(ctx, current, 4, "#FF00FF");
-        // Render edge
-        ctx.beginPath();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = "#FF00FF";
-        ctx.moveTo(current.x, current.y);
-        ctx.lineTo(next.x, next.y);
-        ctx.stroke();
-        ctx.closePath();
-    }
-}
-
-function RenderDebugColliderOutline(target: Entity, position: vector2D, ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) {
-    if (target.Collider === undefined)
-        return;
-
-    drawCircle(ctx, target.Position, 2, "#00FF00");
-    if (target.Collider instanceof CircleCollider) {
-        drawCircle(ctx, target.Position, target.Collider.radius, "#00FF00", false);
-        
-    }
-
-    if (target.Collider instanceof RectCollider) {
-        const rect = target.Collider["resolve"](target);
-        
-        // Render edges
-        for (let index = 0; index < rect.vertices.length; index++) {
-            const current = rect.vertices[index];
-            const next = rect.vertices[(index + 1) % (rect.vertices.length)];
-            // Render vertex
-            drawCircle(ctx, current, 2, "#00FF00");
-            // Render edge
-            ctx.beginPath();
-            ctx.lineWidth = 1;
-            ctx.strokeStyle = "#00FF00";
-            ctx.moveTo(current.x, current.y);
-            ctx.lineTo(next.x, next.y);
-            ctx.stroke();
-            ctx.closePath();
-        }
-        
-    }
-}
-
-//
-function drawCircle(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pos: vector2D, radius: number, colour: HexColor, fill: boolean = true) {
+/**
+ * Draws a circle.
+ * @param ctx The target canvas' renderer context.
+ * @param pos The circle's position.
+ * @param radius 
+ * @param colour The colour of the circle.
+ * @param fill Whether the circle should be filled or not.
+ */
+export function drawCircle(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pos: vector2D, radius: number, colour: HexColor, fill: boolean = false, strokeWidth: number = 2) {
     ctx.beginPath();
     ctx.arc(pos.x, pos.y, radius, 0, 360);
     if (fill) {
@@ -123,34 +81,46 @@ function drawCircle(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingCont
     }
     else {
         ctx.strokeStyle = colour;
+        ctx.lineWidth = strokeWidth;
         ctx.stroke();
     }
     ctx.closePath();
 }
 
 /**
- * Calculates coordinates of a rectange's vertices around a given center point.
- * @param size 
- * @param point 
- * @returns 
+ * Draws a rect.
+ * @param ctx The target canvas' renderer context.
+ * @param pos The rect's center's position.
+ * @param size The width and height of the rect.
+ * @param rotation Rotation in degrees.
+ * @param colour The colour of the rect.
+ * @param fill Whether the rect should be filled or not.
  */
-function CalculateRectangleAroundPoint(size: rectSize, point: vector2D): RectangleShape {
-    return [
-        {
-            x: point.x - (size.width / 2),
-            y: point.y - (size.height / 2)
-        } as const,
-        {
-            x: point.x + (size.width / 2),
-            y: point.y - (size.height / 2)
-        } as const,
-        {
-            x: point.x + (size.width / 2),
-            y: point.y + (size.height / 2)
-        } as const,
-        {
-            x: point.x - (size.width / 2),
-            y: point.y + (size.height / 2)
-        } as const
-    ];
+export function drawRect(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, pos: vector2D, size: rectSize, rotation: number, colour: HexColor, fill: boolean = false, strokeWidth: number = 2) {
+    ctx.beginPath();
+    ctx.save();
+    const renderOrigin: vector2D = {
+        x: (rotation !== 0 ? 0 : pos.x) - (size.width / 2),
+        y: (rotation !== 0 ? 0 : pos.y) - (size.height / 2)
+    };
+    if (rotation != 0) {
+        ctx.translate(pos.x, pos.y);
+        ctx.rotate((rotation * Math.PI) / 180.0);
+        ctx.translate(renderOrigin.x, renderOrigin.y);
+        ctx.rect(0, 0, size.width, size.height);
+    }
+    else {
+        ctx.rect(renderOrigin.x, renderOrigin.y, size.width, size.height);
+    }
+    if (fill) {
+        ctx.fillStyle = colour;
+        ctx.fill();
+    }
+    else {
+        ctx.strokeStyle = colour;
+        ctx.lineWidth = strokeWidth;
+        ctx.stroke();
+    }
+    ctx.closePath();
+    ctx.restore();
 }

@@ -7,6 +7,10 @@ export class EntityManager {
         return [...this._list] as ReadonlyArray<Entity>;
     }
 
+    /**
+     * Registers an entity to this engine instance. Only registered entities will be rendered or can interact with eachother.
+     * @param entity 
+     */
     public Register(entity: Entity) {
         if (this.Find(entity.ID) === undefined) {
             this._list.push(entity);

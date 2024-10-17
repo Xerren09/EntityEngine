@@ -69,7 +69,7 @@ export class EngineTime {
      * Checks if the last frame's execution time fits the {@link frameTimeAllocation}. 
      * If the result is often false, lower the target framerate for a smoother experience.
      */
-    public get isFrameTimeAllocationEnough() {
+    public get isFrameTimeAllocationEnough() : boolean {
         return (this._provider.lastFrameTime < this.frameTimeAllocation);
     }
 

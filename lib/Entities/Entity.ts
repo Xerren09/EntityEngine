@@ -1,13 +1,27 @@
 import AnimatedSprite from '../Sprites/AnimatedSprite.js';
 import Sprite from '../Sprites/Sprite.js';
 import { rectSize, vector2D } from '../Types/Types.js';
-import { Collider, CollisionResolver } from './Collision/Colliders/Collider.js';
-import { GetCollisionsByTag } from './Collision/Collision.js';
+import { Collider } from './Collision/Colliders/Collider.js';
+import { CollisionResolver } from './Collision/Resolver.js';
+import { EntityManager } from './Entities.js';
 
+/**
+ * The basic building blocks of the game, entities serve as game objects that can render textures, move around, and interact with other entities.
+ */
 export default class Entity {
+    /**
+     * The entity's unique ID. Note that this only has to be unique within a given Engine instance. 
+     * ID collisions will be checked when adding the entity to an instance.
+     */
     public readonly ID: string;
+    /**
+     * Tags used for organisation purposes. See {@link EntityManager.FindAllTagged}
+     */
     public Tags: string[] = [];
     public _position: vector2D = { x: 0, y: 0 };
+    /**
+     * The entity's position. This is treated as the center of the entity.
+     */
     public get Position(): vector2D {
         return {
             x: this._position.x,
@@ -21,9 +35,16 @@ export default class Entity {
         };
     }
 
+    /**
+     * The entity's attached {@link Collider}.
+     * Colliders allow the engine to detect when two entities interact.
+     */
     public Collider?: Collider;
 
     private _size: rectSize = { width: 0, height: 0 };
+    /**
+     * The entity's rect size. This is used when rendering the given {@link Entity.Sprite}
+     */
     public get Size() {
         return this._size;
     }
@@ -31,28 +52,10 @@ export default class Entity {
         this._size = val;
     }
 
-    public get Vertices(): ReadonlyArray<vector2D> {
-        return [
-            {
-                x: this.Position.x - (this.Size.width / 2),
-                y: this.Position.y - (this.Size.height / 2)
-            } as const,
-            {
-                x: this.Position.x + (this.Size.width / 2),
-                y: this.Position.y - (this.Size.height / 2)
-            } as const,
-            {
-                x: this.Position.x + (this.Size.width / 2),
-                y: this.Position.y + (this.Size.height / 2)
-            } as const,
-            {
-                x: this.Position.x - (this.Size.width / 2),
-                y: this.Position.y + (this.Size.height / 2)
-            } as const
-        ];
-    };
-
     private _rotation: number = 0;
+    /**
+     * Rotation in degrees.
+     */
     public get Rotation() {
         return this._rotation;
     }
@@ -60,8 +63,18 @@ export default class Entity {
         this._rotation = val % 360;
     }
     
+    /**
+     * The entity's attached texture, either a {@link Sprite} or {@link AnimatedSprite}.
+     * Sprites render into the defined {@link Size} rect, while respecting rotation.
+     * 
+     * See {@link Sprite} for more information about sprite rendering behaviour.
+     */
     public Sprite?: Sprite | AnimatedSprite;
 
+    /**
+     * 
+     * @param id The entity's unique ID. Note that this only has to be unique within a given Engine instance. ID collisions will be checked when adding the entity to an instance.
+     */
     constructor(id: string) {
         this.ID = id;
     }
@@ -110,6 +123,11 @@ export default class Entity {
         }
     }
 
+    /**
+     * Determines if this entity's collider is interesting with the target's, if both have colliders.
+     * @param target 
+     * @returns `true` is the two entity's colliders intersect, `false` if they don't. Also returns `false` if either or neither have no colliders attached.
+     */
     public IsIntersecting(target: Entity): boolean {
         return CollisionResolver(this, target);
     }

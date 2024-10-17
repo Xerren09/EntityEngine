@@ -3,6 +3,15 @@ import SpriteSheet from "./SpriteSheet.js";
 
 const compilationCanvas = new OffscreenCanvas(100, 100);
 
+/**
+ * The base of all sprite resources. Sprites can be re-used between entities, and are treated independently during the rendering pass.
+ * 
+ * When assigning the content array, they can be either string hex colour codes or tile indexes from a specific spritesheet.
+ * These will be sticthed together into a single texture, and rendered left to right, in order.
+ * 
+ * If an entity's render size is smaller than the sprite's, the texture will be cut off during the rendering pass.
+ * If an entity's render size is larger than the sprite's, the texture will repeat left-to-right, top-to-bottom to fill the render rect.
+ */
 export abstract class TextureResource {
     protected _opacity: number = 1;
     /**

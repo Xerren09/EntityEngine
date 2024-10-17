@@ -4,17 +4,20 @@ import { CanvasRenderer } from "../Graphics/CanvasRenderer.js";
 import Render from "../Graphics/Renderer.js";
 import { EngineTime, EngineTiming } from "./Timing.js";
 
-enum ENGINE_EVENTS {
+/**
+ * The list of engine events.
+ */
+export enum ENGINE_EVENTS {
     /**
-     * 
+     * Called when the engine is started cold. This can either be on initial start, or after a full reset.
      */
     awake = "awake",
     /**
-     * 
+     * Called once per frame. Each registered event listener will be called in-order before rendering the frame.
      */
     update = "update",
     /**
-     * 
+     * Called after a frame has been rendered. Used to render custom graphics on top of the frame.
      */
     customRender = "customRender"
 }
@@ -23,6 +26,35 @@ interface EngineEventBuckets {
     [key: string]: Array<(...args: any[]) => void>;
 }
 
+/**
+ * An instance of the engine. This is where it all begins.
+ * 
+ * Once attached to a canvas, the engine instance be started by calling {@link EntityEngine.start()}.
+ * 
+ * The execution loop (event "update") and other engine events can be accessed by registering an event handler via {@link EntityEngine.addEventListener()}.
+ * Listeners will be called in-order, between each frame render. A special event is `customRender`, which is called *after* frame render,
+ * to allow custom elements to be rendered on top of the fresh frame.
+ * 
+ * An initial setup would look something like this:
+ * 
+ * ```js
+ * const engine = new EntityEngine("gameArea");
+ * 
+ * const spriteSheet = new SpriteSheet("spritesheet.png", { width: 25, height: 25 });
+ * 
+ * engine.addEventListener("awake", () => {
+ *   // Perform initialisations
+ * };
+ * 
+ * engine.addEventListener("update", () => {
+ *   // Execute gameplay code
+ * };
+ * 
+ * spriteSheetLoader(spriteSheet).then(() => {
+ *  engine.start();
+ * });
+ * ```
+ */
 export default class EntityEngine {
     /**
      * Flag to check if the engine was initialised (cold-start).
@@ -60,7 +92,7 @@ export default class EntityEngine {
     private _delta: EngineTime = new EngineTime(this._timings);
 
     /**
-     * 
+     * Wrapper for the attached HTML Canvas' draw API.
      */
     public Renderer: CanvasRenderer;
     /**
@@ -70,6 +102,10 @@ export default class EntityEngine {
      */
     public readonly Entities: EntityManager;
 
+    /**
+     * 
+     * @param canvasId The ID of the HTML Canvas that will be used to render the game. 
+     */
     constructor(canvasId?: string) {
         this.Entities = new EntityManager();
         if (canvasId) {
@@ -176,7 +212,7 @@ export default class EntityEngine {
     }
 
     /**
-     * Attach the engine instance to an HTML Canvas to draw the frame onto. 
+     * Attaches the engine instance to an HTML Canvas that will be used to render the game.
      * @param canvasID
      */
     public attachToCanvas(canvasID: string) {

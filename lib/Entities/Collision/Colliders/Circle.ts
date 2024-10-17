@@ -1,15 +1,19 @@
 import { Collider } from "./Collider.js";
 import { circle2D, rectSize, vector2D } from "../../../Types/Types.js";
 import Entity from "../../Entity.js";
-import { Vector2D } from "../../Math/Vector2D.js";
-import { __isLeft } from "../Collision.js";
+import { Vector2D } from "../../../Math/Vector2D.js";
+import { isLeftOfLine } from "../../../Math/Collision.js";
 
-export type CircleShape = ReadonlyArray<circle2D>;
-
+/**
+ * A simple circular collider. See {@link Collider} for more.
+ */
 export class CircleCollider extends Collider {
     private _radius: number = 5;
     public get radius() {
         return this._radius;
+    }
+    public set radius(value) {
+        this.setRadius(value);
     }
 
     constructor(radius?: number, offset?: vector2D) {
@@ -33,7 +37,7 @@ export class CircleCollider extends Collider {
     protected resolve(a: Entity): circle2D {
         return {
             radius: this.radius,
-            position: Vector2D.rotate(a.Position, Vector2D.add(a.Position, this.offset), a.Rotation)
+            position: Vector2D.add(a.Position, this.offset)
         }
     }
 }

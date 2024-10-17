@@ -1,36 +1,4 @@
-import { vector2D } from "../../Types/Types.js";
-
-export function Dot(v1: vector2D, v2: vector2D): number {
-    return ((v1.x * v2.x) + (v1.y * v2.y))
-}
-
-export function Distance(start: vector2D, end: vector2D): number {
-    return Math.hypot((start.x - end.x), (start.y - end.y));
-}
-
-export function Magnitude(vector: vector2D): number {
-    return Math.hypot(vector.x, vector.y)
-}
-
-export function ToUnit(vector: vector2D): vector2D {
-    const magnitude = Magnitude(vector);
-    return {
-        x: vector.x / magnitude,
-        y: vector.y / magnitude
-    };
-}
-
-export function Subtract(v1: vector2D, v2: vector2D): vector2D {
-    const v3: vector2D = {
-        x: v1.x - (v2.x),
-        y: v1.y - (v2.y)
-    };
-    return v3;
-}
-
-export function Equals(v1: vector2D, v2: vector2D): boolean {
-    return (v1.x === v2.x && v1.y === v2.y);
-}
+import { vector2D } from "../Types/Types.js";
 
 export class Vector2D {
     public static equals(v1: vector2D, v2: vector2D): boolean {
@@ -38,7 +6,7 @@ export class Vector2D {
     }
 
     public static distance(start: vector2D, end: vector2D): number {
-        // Do not use Math.hypot, it is extremely slow on 
+        // Do not use Math.hypot, it is extremely slow on chromium
         const x = (start.x - end.x);
         const y = (start.y - end.y);
         return Math.sqrt((x*x) + (y*y));
@@ -49,7 +17,7 @@ export class Vector2D {
     }
 
     public static normalise(vector: vector2D): vector2D {
-        const magnitude = Magnitude(vector);
+        const magnitude = this.magnitude(vector);
         return {
             x: vector.x / magnitude,
             y: vector.y / magnitude

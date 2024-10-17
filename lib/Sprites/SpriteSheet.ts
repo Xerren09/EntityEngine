@@ -1,4 +1,4 @@
-import { ReadonlyVector2D, rectSize, vector2D } from "../Types/Types";
+import { ReadonlyVector2D, rectSize, vector2D } from "../Types/Types.js";
 
 export default class SpriteSheet
 {
@@ -29,7 +29,7 @@ export default class SpriteSheet
     private _indices: Array<vector2D> = [];
     public get indexMatrix(): ReadonlyArray<ReadonlyVector2D>
     { 
-        return this._indices;
+        return [...this._indices];
     }
 
     /**
