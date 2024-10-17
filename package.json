@@ -5,5 +5,8 @@
   "scripts": {
     "build": "tsc --build",
     "clean": "tsc --build --clean"
+  },
+  "dependencies": {
+    "@types/offscreencanvas": "^2019.7.3"
   }
 }

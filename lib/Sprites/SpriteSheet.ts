@@ -1,33 +1,45 @@
-import { rectSize, vector2D } from "../Types/Types";
+import { ReadonlyVector2D, rectSize, vector2D } from "../Types/Types.js";
 
 export default class SpriteSheet
 {
-    public readonly ID: string = "";
     public readonly Image: HTMLImageElement = new Image();
+    private _ready: boolean = false;
+    /**
+     * Indicates if the spritesheet image has been successfully loaded, decoded, and is ready to use.
+     */
+    public get ready(): boolean  {
+        return this._ready;
+    }
     private _source: string = "";
+    get source(): string {
+        return this._source;
+    }
     private _height: number = 0;
-    get Height() {
+    get height() {
         return this._height;
     }
     private _width: number = 0;
-    get Width() {
+    get width() {
         return this._width;
     }
     private _tileSize: rectSize;
-    get TileSize() {
+    get tileSize() {
         return this._tileSize;
     }
-    public readonly IndexMatrix: Array<vector2D> = [];
+    private _indices: Array<vector2D> = [];
+    public get indexMatrix(): ReadonlyArray<ReadonlyVector2D>
+    { 
+        return [...this._indices];
+    }
 
     /**
      * Create a new SpriteSheet instance.
      * @param source
      * @param tileSize
      */
-    constructor(id: string, source: string, tileSize: rectSize) {
-        this.ID = id;
+    constructor(source: string, tileSize: rectSize) {
         this._source = source;
-        // Anything below zero turns the proprocesor into a memory bomb.
+        // Anything below zero turns the preprocesor into a memory bomb.
         if (tileSize.width <= 0) {
             tileSize.width = 1;
         }
@@ -38,37 +50,40 @@ export default class SpriteSheet
     }
 
     /**
-     * Loads the Spritesheet image.
-     *
+     * Loads the Spritesheet image. Once the spritesheet has been successfully loaded (see {@link ready} property), subsequent calls will perform no action.
      */
     public async Load() {
-        // Await loading the image
-        this.Image.decode().then(() => {
+        if (this._ready == false) {
+            this.Image.src = this._source;
+            try {
+                await this.Image.decode();
+            }
+            catch (e) {
+                console.error(`Error while loading spritesheet from ${this._source}.`);
+                throw e;
+            }
             this._height = this.Image.height;
             this._width = this.Image.width;
-            this.Indexer();
-        }).catch((encodingError) => {
-            console.error("Error while loading spritesheet: " + encodingError);
-            throw encodingError;
-        });
-        this.Image.src = this._source;
+            this.IndexSpritesheet();
+            this._ready = true;
+        }  
     }
 
     /**
      * Gets the coordinates of the sprite at the given index.
      * @param index
      */
-    public GetSpriteCoordinates(index: number): vector2D {
-        if (index >= this.IndexMatrix.length) {
-            console.warn(`Index ${index} is outside the bounds of SpriteSheet ${this.ID}.`);
-            return { x: -1, y: -1 };
+    public GetSpriteCoordinates(index: number): ReadonlyVector2D {
+        if (index >= this._indices.length) {
+            console.warn(`Index ${index} is outside the bounds of SpriteSheet (${this.source}). The default 0,0 index will be used for this segment instead.`);
+            return { x: 0, y: 0 };
         }
         else {
-            return this.IndexMatrix[index];
+            return this._indices[index];
         }
     }
 
-    private Indexer() {
+    private IndexSpritesheet() {
         const row_count = Math.floor(this._height / this._tileSize.height);
         const column_count = Math.floor(this._width / this._tileSize.width);
         // Gets number of sprites
@@ -94,7 +109,7 @@ export default class SpriteSheet
              * rowIndex = y,
              * columnIndex = x
              */
-            this.IndexMatrix.push({ x: index_column, y: index_row });
+            this._indices.push({ x: index_column, y: index_row });
         }
     }
 };

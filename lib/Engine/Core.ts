@@ -1,103 +1,221 @@
-import { EntityList } from "../Entities/Entities.js";
-import AnimationUpdateLoop from "../Graphics/AnimationUpdateLoop.js";
-import CanvasRenderer from "../Graphics/CanvasRenderer.js";
+import { EntityManager } from "../Entities/Entities.js";
+import { CanvasRenderer } from "../Graphics/CanvasRenderer.js";
 import Render from "../Graphics/Renderer.js";
-import { SpriteSheetList, SpriteSheets } from "../Sprites/SpriteSheets.js";
+import { EngineTime, EngineTiming } from "./Timing.js";
 
+/**
+ * The list of engine events.
+ */
+export enum ENGINE_EVENTS {
+    /**
+     * Called when the engine is started cold. This can either be on initial start, or after a full reset.
+     */
+    awake = "awake",
+    /**
+     * Called once per frame. Each registered event listener will be called in-order before rendering the frame.
+     */
+    update = "update",
+    /**
+     * Called after a frame has been rendered. Used to render custom graphics on top of the frame.
+     */
+    customRender = "customRender"
+}
+
+interface EngineEventBuckets {
+    [key: string]: Array<(...args: any[]) => void>;
+}
+
+/**
+ * An instance of the engine. This is where it all begins.
+ * 
+ * Once attached to a canvas, the engine instance be started by calling {@link EntityEngine.start()}.
+ * 
+ * The execution loop (event "update") and other engine events can be accessed by registering an event handler via {@link EntityEngine.addEventListener()}.
+ * Listeners will be called in-order, between each frame render. A special event is `customRender`, which is called *after* frame render,
+ * to allow custom elements to be rendered on top of the fresh frame.
+ * 
+ * An initial setup would look something like this:
+ * 
+ * ```js
+ * const engine = new EntityEngine("gameArea");
+ * 
+ * const spriteSheet = new SpriteSheet("spritesheet.png", { width: 25, height: 25 });
+ * 
+ * engine.addEventListener("awake", () => {
+ *   // Perform initialisations
+ * };
+ * 
+ * engine.addEventListener("update", () => {
+ *   // Execute gameplay code
+ * };
+ * 
+ * spriteSheetLoader(spriteSheet).then(() => {
+ *  engine.start();
+ * });
+ * ```
+ */
 export default class EntityEngine {
-    private _targetfps: number = 60;
-    private _lastCycleExecuteTimestamp: number;
-    private _lastCycleExecuteStart: number;
-    private _lastCycleExecuteDuration: number;
-    private _awaitUntilTimestamp: number = 0;
-    private _runEnabled: boolean = true;
+    /**
+     * Flag to check if the engine was initialised (cold-start).
+     */
+    private _ENGINE_INIT: boolean = false;
+    /**
+     * The ID of the {@link requestAnimationFrame} request. Used by {@link stop} to cancel any already registered cycle requests before they are ran.
+     */
+    private _CE_FRAMEID: number = 0;
+    /**
+     * Flag to check if {@link CycleExecute} is enabled. If set to false the current cycle may still finish, but no new cycle will be started.
+     */
+    private _CE_ENABLED: boolean = true;
+    /**
+     * Flag / timestamp for {@link wait}. The value is a future time until the engine should not invoke `update` and `render` events, but should otherwise run idle cycles. If `null`, no wait is registered.
+     */
+    private _CE_WAIT: number | null = null;
 
-    public Awake = () => { };
+    /**
+     * Contains the registered event handlers.
+     */
+    private readonly _eventBuckets: EngineEventBuckets = {
+        awake: [],
+        update: [],
+        customRender: []
+    }
 
-    public Update = () => { };
+    /**
+     * Keeps track of the engine's internal timings and stats.
+     */
+    private _timings: EngineTiming = new EngineTiming();
+    /**
+     * Provides the Time api for `update` events.
+     */
+    private _delta: EngineTime = new EngineTime(this._timings);
+    public get Timing(): EngineTime {
+        return this._delta;
+    }
 
-    public CustomRender = (renderer: CanvasRenderer) => { };
-
+    /**
+     * Wrapper for the attached HTML Canvas' draw API.
+     */
     public Renderer: CanvasRenderer;
+    /**
+     * Manages the Entities visible to the engine.
+     * 
+     * In order for an Entity to be visible and active, register it via the {@link EntityManager.Add} method.
+     */
+    public readonly Entities: EntityManager;
 
+    /**
+     * 
+     * @param canvasId The ID of the HTML Canvas that will be used to render the game. 
+     */
+    constructor(canvasId?: string) {
+        this.Entities = new EntityManager();
+        if (canvasId) {
+            this.attachToCanvas(canvasId);
+        }
+    }
+
+    /**
+     * Provides the engine's main execution loop.
+     * 
+     * The engine executes items within a given cycle in the following order:
+     * ```
+     * Calculate engine timings
+     *          ▼
+     * Check engine await
+     *          ▼
+     * Run Update handlers
+     *          ▼
+     * Run Renderer
+     *          ▼
+     * Run CustomRender handlers
+     * ```
+     * @param timeStamp 
+     */
     private CycleExecute = (timeStamp: number) => {
-        const msDelta = (this.DeltaTime() * 1000);
-        let allow = msDelta >= (1000 / this._targetfps);
-        if (this._awaitUntilTimestamp != 0) {
+        // Calculate delta for this frame
+        const lastCycleDeltaMs = (performance.now() - this._timings.previous);
+        // Treat _timings.targetFramerate as an FPS cap, and only allow a new cycle if the per frame budget is safe
+        let allowExecute = (lastCycleDeltaMs >= (1000 / this._timings.targetFramerate));
+        // Handle engine pause
+        if (this._CE_WAIT != null) {
             // Non-thread blocking absolute cutie, I love you.
-            if (msDelta < this._awaitUntilTimestamp) {
-                allow = false;
+            if (performance.now() < this._CE_WAIT) {
+                allowExecute = false;
             }
-            else if (msDelta >= this._awaitUntilTimestamp) {
-                this._awaitUntilTimestamp = 0;
+            else if (performance.now() >= this._CE_WAIT) {
+                this.cancelWait();
             }
         }
-        if (allow) {
-            this._lastCycleExecuteStart = performance.now();
+        if (allowExecute) {
+            this._timings.current = timeStamp || performance.now();
             // ------
-            // Actual update function called now; this is where any gamecode is executed
-            this.Update();
-            // Render entities
-            Render(this.Renderer);
-            // Update animations
-            AnimationUpdateLoop();
-            // Call custom render function
-            this.CustomRender(this.Renderer);
+            // Call `update` handlers, this is where gamecode is executed
+            this.dispatchEngineEvent(ENGINE_EVENTS.update, this._delta);
+            this._timings.lastUpdateTime = performance.now() - this._timings.current;
+            // Run rendering pass
+            Render(this.Renderer, this.Entities);
+            this._timings.lastRenderTime = performance.now() - (this._timings.current + this._timings.lastUpdateTime);
+            // Call `customRender` handlers
+            this.dispatchEngineEvent(ENGINE_EVENTS.customRender, this.Renderer.context);
             // ------
-            this._lastCycleExecuteDuration = (performance.now() - this._lastCycleExecuteStart);
-            if (timeStamp == null) {
-                this._lastCycleExecuteTimestamp = performance.now();
-            }
-            else {
-                this._lastCycleExecuteTimestamp = timeStamp;
-            }
+            this._timings.lastFrameTime = performance.now() - this._timings.current;
+            this._timings.previous = timeStamp || performance.now();
         }
-        if (this._runEnabled) {
-            requestAnimationFrame(this.CycleExecute);
-        }
-        else {
-            this._runEnabled = true;
+        if (this._CE_ENABLED) {
+            this.NextCycle();
         }
     }
 
-    /**
-     * Starts the engine and sets it to its default state. 
-     */
-    public Start() {
-        SpriteSheetList.length = 0;
-        EntityList.length = 0;
-        this.Awake();
-        this._awaitUntilTimestamp = 0;
-        this._lastCycleExecuteTimestamp = 0;
-        SpriteSheets.Load().then(() => {
-            requestAnimationFrame(this.CycleExecute);
-        }).catch((error) => {
-            console.error("One or more SpriteSheet(s) failed to load. Make sure the source images can be accessed.");
-        });
+    private NextCycle() {
+        this._CE_FRAMEID = requestAnimationFrame(this.CycleExecute);
     }
 
     /**
-     * Stops the engine.
+     * Starts the engine and calls the `awake` event.
+     * 
+     * If the engine was stopped previously, this acts as a resume command, and skips calling Awake.
      */
-    public Stop() {
-        this._runEnabled = true;
-        this._awaitUntilTimestamp = 0;
+    public start() {
+        if (this._ENGINE_INIT == false) {
+            // This is a cold start
+            this.dispatchEngineEvent(ENGINE_EVENTS.awake);
+            this._ENGINE_INIT = true;
+        }
+        // Prevents the timing scale jumping high on the first frame
+        this._timings.previous = performance.now();
+        this._CE_ENABLED = true;
+        this.cancelWait();
+        this.NextCycle();
     }
 
     /**
-     * Restarts the engine while keeping its state.
+     * Stops the engine completely. Use {@link start} to resume.
      */
-    public Restart() {
-        this._runEnabled = true;
-        this._awaitUntilTimestamp = 0;
-        window.requestAnimationFrame(this.CycleExecute);
+    public stop() {
+        this._CE_ENABLED = false;
+        if (this._CE_FRAMEID != 0) {
+            window.cancelAnimationFrame(this._CE_FRAMEID);
+            this._CE_FRAMEID = 0;
+        }
     }
 
     /**
-     * Attach the engine instance to an HTML Canvas to draw the frame onto. 
+     * Resets the engine to its default state. 
+     * This de-registers all entities, and the next time {@link start} is called the `awake` event will be invoked as well.
+     */
+    public reset() {
+        this.stop();
+        this.Entities.Wipe();
+        this._ENGINE_INIT = false;
+        this.start();
+    }
+
+    /**
+     * Attaches the engine instance to an HTML Canvas that will be used to render the game.
      * @param canvasID
      */
-    public AttachToCanvas(canvasID: string) {
+    public attachToCanvas(canvasID: string) {
         this.Renderer = new CanvasRenderer(canvasID);
     }
 
@@ -105,49 +223,71 @@ export default class EntityEngine {
      * Stops engine execution for the specified duration (ms). During this time no new frames are rendered, or game code is executed.
      * @param durationMS 
      */
-    public Wait(durationMS: number): number {
-        const waitEnd = performance.now() + durationMS;
-        this._awaitUntilTimestamp = waitEnd;
-        return this._awaitUntilTimestamp;
+    public wait(durationMS: number): number {
+        this._CE_WAIT = performance.now() + durationMS;
+        return this._CE_WAIT;
     }
 
     /**
-     * Cancels Wait. Does not restart execution immediately, but at the next frame render. 
+     * Cancels the set wait timer. 
      */
-    public CancelWait() {
-        this._awaitUntilTimestamp = 0;
+    public cancelWait() {
+        this._CE_WAIT = null;
     }
 
     /**
-     * Gets the time since the last frame in milliseconds.
+     * Register a listener to the `awake` event. Use this event to safely initialise entities and load anything important. This event fires before the engine actually starts.
      */
-    public DeltaTime(): number {
-        const timeStamp = performance.now();
-        const deltaTime = (timeStamp - this._lastCycleExecuteTimestamp) / 1000;
-        return deltaTime;
+    public addEventListener(type: "awake", listener: () => void): void;
+    /**
+     * Register a listener to the `update` event. This serves as the main update loop of the engine, and will be invoked every frame.
+     * Handlers will be called in the order they were registered.
+     * 
+     * This event is invoked at around same frequency as the set target framerate (according to [requestAnimationFrame's rules](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame#examples)), but is not fixed. However it will not run more _often_ than the target framerate.
+     * 
+     * @param listener The listener will be passed a {@link EngineTime} instance that provides - among other things - the time elapsed between frames via the {@link EngineTime.delta} property.
+     */
+    public addEventListener(type: "update", listener: (time: EngineTime) => void): void;
+    /**
+     * Register a listener to the `customRender` event. 
+     * This event is invoked immediately after rendering the current frame has finished, but before the next frame is started.
+     * Use this to display any custom graphics on top of the rendered frame (such as UI).
+     * @param listener The listener will be passed the attached canvas' {@link CanvasRenderingContext2D} which can be used to draw addition graphics on top of the frame.
+     */
+    public addEventListener(type: "customRender", listener: (renderer: CanvasRenderingContext2D) => void): void;
+    public addEventListener(type: "update" | "awake" | "customRender", listener: (...args: any[]) => void) {
+        const keyCheck = Object.keys(this._eventBuckets).find(el => el === type);
+        if (keyCheck == undefined)
+            throw new Error(`No engine event with the specific type "${type}" exists`);
+
+        if (this._eventBuckets[type].find(el => el == listener)) {
+            console.warn(`This engine event listener instance has already been added to ${type}.`);
+            return;
+        }
+        
+        this._eventBuckets[type].push(listener);
     }
 
     /**
-     * Gets the time the engine needs to execute a single frame in milliseconds.
+     * Removes a registered listener from the given event bucket.
+     * @param type 
+     * @param listener 
      */
-    public GetExecutionTime(): number {
-        return this._lastCycleExecuteDuration;
+    public removeEventListener(type: "update" | "awake" | "customRender", listener: (...args: any[]) => void) {
+        const keyCheck = Object.keys(this._eventBuckets).find(el => el === type);
+        if (keyCheck == undefined)
+            throw new Error(`No engine event with the specific type "${type}" exists`);
+
+        const index = this._eventBuckets[type].findIndex(el => el == listener);
+        if (index != -1) {
+            this._eventBuckets[type].splice(index, 1);
+        }
     }
 
-    /**
-     * Gets the time the engine is idling between frames in milliseconds.
-     */
-    public GetExecutionIdleTime(): number {
-        const frameTimeAllocation = (1000 / this._targetfps);
-        const frameIdleTime = frameTimeAllocation - this._lastCycleExecuteDuration;
-        return frameIdleTime;
-    }
-
-    /**
-     * Gets the potential framerate that the engine could currently execute at.
-     */
-    public GetVirtualFrameRate(): number {
-        const fps = (1000 / this._lastCycleExecuteDuration);
-        return fps;
+    private dispatchEngineEvent(type: ENGINE_EVENTS, ...params: any) {
+        const handlers = this._eventBuckets[type];
+        for (const handler of handlers) {
+            handler(...params);
+        }
     }
 }
