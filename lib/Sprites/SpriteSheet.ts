@@ -1,4 +1,4 @@
-import { ReadonlyVector2D, rectSize, vector2D } from "../Types/Types.js";
+import type { ReadonlyVector2D, vector2D } from "../Types/Types.js";
 
 export default class SpriteSheet
 {
@@ -22,7 +22,7 @@ export default class SpriteSheet
     get width() {
         return this._width;
     }
-    private _tileSize: rectSize;
+    private _tileSize: vector2D;
     get tileSize() {
         return this._tileSize;
     }
@@ -37,14 +37,14 @@ export default class SpriteSheet
      * @param source
      * @param tileSize
      */
-    constructor(source: string, tileSize: rectSize) {
+    constructor(source: string, tileSize: vector2D) {
         this._source = source;
         // Anything below zero turns the preprocesor into a memory bomb.
-        if (tileSize.width <= 0) {
-            tileSize.width = 1;
+        if (tileSize.x <= 0) {
+            tileSize.x = 1;
         }
-        if (tileSize.height <= 0) {
-            tileSize.height = 1;
+        if (tileSize.y <= 0) {
+            tileSize.y = 1;
         }
         this._tileSize = tileSize;
     }
@@ -84,8 +84,8 @@ export default class SpriteSheet
     }
 
     private IndexSpritesheet() {
-        const row_count = Math.floor(this._height / this._tileSize.height);
-        const column_count = Math.floor(this._width / this._tileSize.width);
+        const row_count = Math.floor(this._height / this._tileSize.y);
+        const column_count = Math.floor(this._width / this._tileSize.x);
         // Gets number of sprites
         const sprite_segments = row_count * column_count;
         // Uses 1 based indexing
@@ -101,8 +101,8 @@ export default class SpriteSheet
             const row_Number = Math.ceil(index / column_count) - 1;
             const column_Number = (index - ((row_Number) * (column_count))) - 1;
             // Gets the top-left most coordinates of the sprite. Render to the right and down
-            const index_row = (row_Number * this._tileSize.height);
-            const index_column = (column_Number * this._tileSize.width);
+            const index_row = (row_Number * this._tileSize.y);
+            const index_column = (column_Number * this._tileSize.x);
             // Add the coordinate to the matrix
             /**
              * Cross reference for V1's SpriteSheetIndexer

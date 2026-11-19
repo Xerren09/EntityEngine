@@ -1,5 +1,5 @@
-import { ReadonlyRectSize, ReadonlyVector2D, rect2D, rectSize, vector2D } from "../../../Types/Types.js"
-import Entity from "../../Entity.js"
+import type { ReadonlyVector2D, vector2D } from "../../../Types/Types.js"
+import type Entity from "../../Entity.js"
 
 /**
  * Defines the base for all colliders. They allow the engine to detect when two entities interact, when attached to one.
@@ -8,11 +8,11 @@ import Entity from "../../Entity.js"
  * position and rotation.
  */
 export abstract class Collider {
-    private _rectSize: rectSize = { width: 0, height: 0 };
+    private _rectSize: vector2D = { x: 0, y: 0 };
     /**
-     * The width and height of the shape's bounding box, regardless of rotation.
+     * The x and y of the shape's bounding box, regardless of rotation.
      */
-    public get rectSize() : ReadonlyRectSize {
+    public get rectSize() : ReadonlyVector2D {
         return { ...this._rectSize };
     }
     public set rectSize(value) {
@@ -38,7 +38,7 @@ export abstract class Collider {
         return this._boundingCircleRadius;
     }
 
-    constructor(rect?: rectSize, offset?: vector2D) {
+    constructor(rect?: vector2D, offset?: vector2D) {
         if (rect)
             this.setRectSize(rect);
         if (offset)
@@ -57,9 +57,9 @@ export abstract class Collider {
      * Sets the collider rect box size and bounding circle.
      * @param rect 
      */
-    protected setRectSize(rect: rectSize) {
+    protected setRectSize(rect: vector2D) {
         this._rectSize = { ...rect };
-        this._boundingCircleRadius = Math.hypot(this._rectSize.width, this._rectSize.height) / 2;
+        this._boundingCircleRadius = Math.hypot(this._rectSize.x, this._rectSize.y) / 2;
     }
 
     /**

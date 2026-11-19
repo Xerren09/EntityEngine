@@ -1,5 +1,5 @@
 import { EntityManager } from "../Entities/Entities.js";
-import { circle2D, rect2D, vector2D } from "../Types/Types.js";
+import { circle2D, vector2D } from "../Types/Types.js";
 import Entity from "../Entities/Entity.js";
 import { Vector2D } from "./Vector2D.js";
 
@@ -40,17 +40,17 @@ export function GetCollisionsByTag(entities: EntityManager, self: Entity, tags: 
  * 
  * This works for all convex polygons, regardless of vertex count. Vertices do however need to be declared **clockwise.**
  */
-export function polyIntersect(self: rect2D, target: rect2D) : boolean {
-    const selfCount = self.vertices.length;
-    const targetCount = target.vertices.length;
+export function polyIntersect(self: vector2D[], target: vector2D[]) : boolean {
+    const selfCount = self.length;
+    const targetCount = target.length;
     for (let tv_index = 0; tv_index < targetCount; tv_index++) {
-        const c = target.vertices[tv_index];
-        const d = target.vertices[(tv_index + 1) % targetCount];
+        const c = target[tv_index];
+        const d = target[(tv_index + 1) % targetCount];
         let isPointWithinSelf = true;
         let doEdgesIntersect = false;
         for (let sv_index = 0; sv_index < selfCount; sv_index++) {
-            const a = self.vertices[sv_index];
-            const b = self.vertices[(sv_index + 1) % selfCount];
+            const a = self[sv_index];
+            const b = self[(sv_index + 1) % selfCount];
             if (lineIntersect(a, b, c, d)) {
                 doEdgesIntersect = true;
                 break;
@@ -117,13 +117,13 @@ export function lineIntersect(a: vector2D, b: vector2D, c: vector2D, d: vector2D
  *         \___/
  * ```
  */
-export function circlePolyIntersect(a: circle2D, b: rect2D) {
+export function circlePolyIntersect(a: circle2D, b: vector2D[]) {
     let isInsideRect: boolean = true;
     let isWithinRadius: boolean = false;
 
-    for (let index = 0; index < b.vertices.length; index++) {
-        const current = b.vertices[index];
-        const next = b.vertices[(index + 1) % b.vertices.length];
+    for (let index = 0; index < b.length; index++) {
+        const current = b[index];
+        const next = b[(index + 1) % b.length];
         if (isInsideRect == true && isLeftOfLine(current, next, a.position) == true) {
             isInsideRect = false;
         }

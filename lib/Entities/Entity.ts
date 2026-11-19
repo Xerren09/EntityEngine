@@ -1,32 +1,32 @@
 import AnimatedSprite from '../Sprites/AnimatedSprite.js';
 import Sprite from '../Sprites/Sprite.js';
-import { rectSize, vector2D } from '../Types/Types.js';
+import { vector2D } from '../Types/Types.js';
 import { Collider } from './Collision/Colliders/Collider.js';
 import { CollisionResolver } from './Collision/Resolver.js';
-import { EntityManager } from './Entities.js';
+import { type EntityManager } from './Entities.js';
 
 /**
  * The basic building blocks of the game, entities serve as game objects that can render textures, move around, and interact with other entities.
  */
 export default class Entity {
+    protected _position: vector2D = { x: 0, y: 0 };
+    protected _rotation: number = 0;
+    protected _renderSize: vector2D = { x: 0, y: 0 };
+
     /**
      * The entity's unique ID. Note that this only has to be unique within a given Engine instance. 
      * ID collisions will be checked when adding the entity to an instance.
      */
     public readonly ID: string;
     /**
-     * Tags used for organisation purposes. See {@link EntityManager.FindAllTagged}
+     * Tags used for organisation purposes. See {@link EntityManager.FindAllTagged}.
      */
     public Tags: string[] = [];
-    public _position: vector2D = { x: 0, y: 0 };
     /**
      * The entity's position. This is treated as the center of the entity.
      */
     public get Position(): vector2D {
-        return {
-            x: this._position.x,
-            y: this._position.y
-        }
+        return {...this._position};
     }
     public set Position(val: vector2D) {
         this._position = {
@@ -34,25 +34,6 @@ export default class Entity {
             y: val.y
         };
     }
-
-    /**
-     * The entity's attached {@link Collider}.
-     * Colliders allow the engine to detect when two entities interact.
-     */
-    public Collider?: Collider;
-
-    private _size: rectSize = { width: 0, height: 0 };
-    /**
-     * The entity's rect size. This is used when rendering the given {@link Entity.Sprite}
-     */
-    public get Size() {
-        return this._size;
-    }
-    public set Size(val: rectSize) {
-        this._size = val;
-    }
-
-    private _rotation: number = 0;
     /**
      * Rotation in degrees.
      */
@@ -62,17 +43,31 @@ export default class Entity {
     public set Rotation(val: number) {
         this._rotation = val % 360;
     }
+    /**
+     * The entity's rendering rect size. This is the size of the rect that will be filled with {@link Entity.Sprite}.
+     */
+    public get RenderSize(): vector2D {
+        return {...this._renderSize};
+    }
+    public set RenderSize(val: vector2D) {
+        this._renderSize = val;
+    }
     
     /**
      * The entity's attached texture, either a {@link Sprite} or {@link AnimatedSprite}.
-     * Sprites render into the defined {@link Size} rect, while respecting rotation.
+     * Sprites render into the defined {@link RenderSize} rect, while respecting rotation.
      * 
      * See {@link Sprite} for more information about sprite rendering behaviour.
      */
     public Sprite?: Sprite | AnimatedSprite;
 
     /**
-     * 
+     * The entity's attached {@link Collider}.
+     * Colliders allow the engine to detect when two entities interact.
+     */
+    public Collider?: Collider;
+
+    /**
      * @param id The entity's unique ID. Note that this only has to be unique within a given Engine instance. ID collisions will be checked when adding the entity to an instance.
      */
     constructor(id: string) {
@@ -90,8 +85,8 @@ export default class Entity {
         if (isNaN(vector.y)) {
             vector.y = 0;
         }
-        this.Position.x += vector.x;
-        this.Position.y += vector.y;
+        this._position.x += vector.x;
+        this._position.y += vector.y;
     }
 
     /**
@@ -108,18 +103,22 @@ export default class Entity {
      */
     public MoveTowards(targetCoordinates: vector2D, step: number) {
         const distanceVector: vector2D = {
-            x: targetCoordinates.x - (this.Position.x),
-            y: targetCoordinates.y - (this.Position.y)
+            x: targetCoordinates.x - (this._position.x),
+            y: targetCoordinates.y - (this._position.y)
         };
         // Get distance between this and target
-        const vectorLength = Math.sqrt(Math.pow(distanceVector.x, 2) + Math.pow(distanceVector.y, 2));
-        const normalVector: vector2D = {
-            x: (distanceVector.x / vectorLength),
-            y: (distanceVector.y / vectorLength),
+        const length = Math.sqrt((distanceVector.x * distanceVector.x) + (distanceVector.y * distanceVector.y));
+        const normalised: vector2D = {
+            x: (distanceVector.x / length),
+            y: (distanceVector.y / length),
         };
         // distance check to stop wiggle
-        if (vectorLength >= step) {
-            this.Translate({ x: (normalVector.x * step), y: (normalVector.y * step) });
+        if (length >= step) {
+            this.Translate({ x: (normalised.x * step), y: (normalised.y * step) });
+        }
+        else {
+            this._position.x = targetCoordinates.x;
+            this._position.y = targetCoordinates.y;
         }
     }
 

@@ -1,4 +1,4 @@
-import { HexColor, rectSize, vector2D } from "../Types/Types.js";
+import { HexColor, vector2D } from "../Types/Types.js";
 import SpriteSheet from "./SpriteSheet.js";
 
 const compilationCanvas = new OffscreenCanvas(100, 100);
@@ -24,7 +24,7 @@ export abstract class TextureResource {
         return this._opacity;
     }
 
-    protected _value: CanvasPattern;
+    protected _value!: CanvasPattern;
     /**
      * The compiled value of the texture.
      */
@@ -43,15 +43,15 @@ export abstract class TextureResource {
     /**
      * 
      */
-    public get tileSize() : rectSize {
+    public get tileSize() : vector2D {
         return this._tileSize;
     }
 
     protected _source?: SpriteSheet;
-    protected _tileSize: rectSize = { width: 5, height: 5 };
+    protected _tileSize: vector2D = { x: 5, y: 5 };
     protected _content: Array<HexColor | number> = [];
 
-    constructor(content: Array<HexColor | number>, tileSize: rectSize, spriteSheet?: SpriteSheet) {
+    constructor(content: Array<HexColor | number>, tileSize: vector2D, spriteSheet?: SpriteSheet) {
         this._tileSize = tileSize;
         this._content = content;
         this._source = spriteSheet;
@@ -63,21 +63,21 @@ export abstract class TextureResource {
      * @param tileSize 
      * @returns 
      */
-    protected compile(content: Array<HexColor | number>, tileSize: rectSize): CanvasPattern {
-        compilationCanvas.width = content.length * tileSize.width;
-        compilationCanvas.height = tileSize.height;
-        const cCtx = compilationCanvas.getContext("2d");
+    protected compile(content: Array<HexColor | number>, tileSize: vector2D): CanvasPattern {
+        compilationCanvas.width = content.length * tileSize.x;
+        compilationCanvas.height = tileSize.y;
+        const cCtx = compilationCanvas.getContext("2d")!;
         cCtx.clearRect(0, 0, compilationCanvas.width, compilationCanvas.height);
         for (let index = 0; index < content.length; index++) {
             const renderPos: vector2D = {
-                x: index * tileSize.width,
+                x: index * tileSize.x,
                 y: 0
             };
             const item = content[index];
             if (typeof item === "string") {
                 cCtx.save();
                 cCtx.fillStyle = item;
-                cCtx.fillRect(renderPos.x, renderPos.y, tileSize.width, tileSize.height);
+                cCtx.fillRect(renderPos.x, renderPos.y, tileSize.x, tileSize.y);
                 cCtx.restore();
             }
             else if (typeof item === "number") {
@@ -89,15 +89,15 @@ export abstract class TextureResource {
                     this._source.Image,
                     segment.x,
                     segment.y,
-                    this._source.tileSize.width,
-                    this._source.tileSize.height,
+                    this._source.tileSize.x,
+                    this._source.tileSize.y,
                     renderPos.x,
                     renderPos.y,
-                    tileSize.width,
-                    tileSize.height
+                    tileSize.x,
+                    tileSize.y
                 );
             }
         }
-        return cCtx.createPattern(compilationCanvas as any as HTMLCanvasElement, "repeat");
+        return cCtx.createPattern(compilationCanvas as any as HTMLCanvasElement, "repeat")!;
     }
 }

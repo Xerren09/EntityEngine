@@ -1,8 +1,7 @@
 import { Collider } from "./Collider.js";
-import { circle2D, rectSize, vector2D } from "../../../Types/Types.js";
-import Entity from "../../Entity.js";
+import type { circle2D, vector2D } from "../../../Types/Types.js";
+import type Entity from "../../Entity.js";
 import { Vector2D } from "../../../Math/Vector2D.js";
-import { isLeftOfLine } from "../../../Math/Collision.js";
 
 /**
  * A simple circular collider. See {@link Collider} for more.
@@ -19,7 +18,7 @@ export class CircleCollider extends Collider {
     constructor(radius?: number, offset?: vector2D) {
         if (radius === undefined)
             radius = 5;
-        const rect: rectSize = { width: radius * 2, height: radius * 2 };
+        const rect: vector2D = { x: radius * 2, y: radius * 2 };
         super(rect, offset);
         this.setRadius(radius);
     }
@@ -30,14 +29,14 @@ export class CircleCollider extends Collider {
      */
     public setRadius(radius: number) {
         this._radius = radius;
-        const rect: rectSize = { width: radius * 2, height: radius * 2 };
+        const rect: vector2D = { x: radius * 2, y: radius * 2 };
         this.setRectSize(rect);
     }
 
     protected resolve(a: Entity): circle2D {
         return {
             radius: this.radius,
-            position: Vector2D.add(a.Position, this.offset)
+            position: Vector2D.add(a["_position"], this.offset)
         }
     }
 }

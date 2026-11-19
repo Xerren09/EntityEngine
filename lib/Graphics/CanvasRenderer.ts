@@ -1,4 +1,6 @@
-import { rectSize } from "../Types/Types.js";
+import { RectCollider } from "../Entities/Collision/Colliders/Rectangle.js";
+import type Entity from "../Entities/Entity.js";
+import type { vector2D } from "../Types/Types.js";
 
 /**
  * Provides access to the canvas API attached to an engine instance.
@@ -7,7 +9,9 @@ export class CanvasRenderer {
     /**
      * The HTML Canvas instance the engine will render frames on.
      */
-    public readonly canvas: HTMLCanvasElement;
+    public get canvas(): HTMLCanvasElement {
+        return this.context.canvas;
+    }
     /**
      * The 2D rendering context for {@link canvas}.
      */
@@ -15,11 +19,18 @@ export class CanvasRenderer {
     /**
      * Gets the current size of the canvas in pixels.
      */
-    public get size(): rectSize {
+    public get size(): vector2D {
         return {
-            width: this.canvas.width,
-            height: this.canvas.height
+            x: this.context.canvas.width,
+            y: this.context.canvas.height
         };
+    }
+
+    public get width(): number {
+        return this.context.canvas.width;
+    }
+    public get height(): number {
+        return this.context.canvas.height;
     }
     /**
      * Contains a set of engine specific options for rendering.
@@ -28,25 +39,37 @@ export class CanvasRenderer {
 
     /**
      * 
-     * @param htmlCanvasID The HTMLCanvasElement's ID in the document.
+     * @param canvas The HTML Canvas Element or its ID within the current document.
      */
-    constructor(htmlCanvasID: string) {
-        const canvas = document.getElementById(htmlCanvasID) as HTMLCanvasElement;
-        if (canvas == undefined) {
-            throw new Error(`No canvas with the ID "${htmlCanvasID}" could be found on the current document.`);
+    constructor(canvas: string | HTMLCanvasElement) {
+        let element: HTMLCanvasElement;
+        if (typeof canvas === "string") {
+            element = document.getElementById(canvas) as HTMLCanvasElement;
+            if (element == undefined) {
+                throw new Error(`No canvas with the ID "${canvas}" could be found on the current document.`);
+            }
         }
-        this.canvas = canvas;
-        this.canvas.width = this.canvas.offsetWidth;
-        this.canvas.height = this.canvas.offsetHeight;
-        this.context = this.canvas.getContext("2d");
+        else {
+            if (canvas == undefined) {
+                throw new Error(`Provided canvas instance "${canvas}" is not valid.`);
+            }
+            element = canvas;
+        }
+        element.width = element.offsetWidth;
+        element.height = element.offsetHeight;
+        const ctx = element.getContext("2d");
+        if (ctx == null) {
+            throw new TypeError(`Could not get 2d context from canvas [${element.id}].`);
+        }
+        this.context = ctx;
     }
 
     /**
      * Changes the canvas' render size to match its real size.
      */
     public refit(height?: number, width?: number) {
-        this.canvas.height = height === undefined ? this.canvas.offsetHeight : height;
-        this.canvas.width = width === undefined ? this.canvas.offsetWidth : width;
+        this.context.canvas.height = height === undefined ? this.context.canvas.offsetHeight : height;
+        this.context.canvas.width = width === undefined ? this.context.canvas.offsetWidth : width;
     }
 }
 

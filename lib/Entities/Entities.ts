@@ -1,10 +1,11 @@
 import Entity from "./Entity.js";
 
+// TODO: rework to its reference and not ID based. one instance can only be stored once
 export class EntityManager {
     private _list: Array<Entity> = [];
 
-    public get List() {
-        return [...this._list] as ReadonlyArray<Entity>;
+    public get List(): ReadonlyArray<Entity> {
+        return this._list as ReadonlyArray<Entity>;
     }
 
     /**

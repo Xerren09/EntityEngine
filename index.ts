@@ -50,8 +50,6 @@ export {
 //-----------------------------
 export {
     vector2D,
-    rect2D,
-    rectSize,
     circle2D,
     HexColor,
 } from "./lib/Types/Types.js"

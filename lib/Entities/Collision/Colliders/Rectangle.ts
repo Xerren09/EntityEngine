@@ -1,7 +1,6 @@
 import { Collider } from "./Collider.js";
-import { rect2D, rectSize, vector2D } from "../../../Types/Types.js";
-import Entity from "../../Entity.js";
-import { polyIntersect } from "../../../Math/Collision.js";
+import type { vector2D } from "../../../Types/Types.js";
+import type Entity from "../../Entity.js";
 import { Vector2D } from "../../../Math/Vector2D.js";
 
 export type RectangleShape = ReadonlyArray<vector2D>;
@@ -14,17 +13,17 @@ export class RectCollider extends Collider {
     /**
      * The rect's dimensions.
      */
-    public get size(): rectSize {
+    public get size(): vector2D {
         return {
-            height: this.rectSize.height,
-            width: this.rectSize.width,
+            y: this.rectSize.y,
+            x: this.rectSize.x,
         };
     }
     public set size(value) {
         this.setRectSize(value);
     }
 
-    constructor(size?: rectSize, offset?: vector2D) {
+    constructor(size?: vector2D, offset?: vector2D) {
         super(size, offset);
     }
 
@@ -32,35 +31,32 @@ export class RectCollider extends Collider {
      * Sets the collider size.
      * @param rect 
      */
-    public setSize(rect: rectSize) {
+    public setSize(rect: vector2D) {
         this.setRectSize(rect);
     }
 
-    protected resolve(a: Entity): rect2D {
-        const point: vector2D = a.Position;
-        const vertexOffset: rectSize = { width: this.rectSize.width / 2, height: this.rectSize.height / 2 };
+    protected resolve(a: Entity): vector2D[] {
+        const point: vector2D = a["_position"];
+        const vertexOffset: vector2D = { x: this.rectSize.x / 2, y: this.rectSize.y / 2 };
         const vertices = [
             {
-                x: point.x - vertexOffset.width,
-                y: point.y - vertexOffset.height
+                x: point.x - vertexOffset.x,
+                y: point.y - vertexOffset.y
             },
             {
-                x: point.x + vertexOffset.width,
-                y: point.y - vertexOffset.height
+                x: point.x + vertexOffset.x,
+                y: point.y - vertexOffset.y
             },
             {
-                x: point.x + vertexOffset.width,
-                y: point.y + vertexOffset.height
+                x: point.x + vertexOffset.x,
+                y: point.y + vertexOffset.y
             },
             {
-                x: point.x - vertexOffset.width,
-                y: point.y + vertexOffset.height
+                x: point.x - vertexOffset.x,
+                y: point.y + vertexOffset.y
             }
         ];
-        return {
-            position: point,
-            vertices: rotatePolygon(vertices, point, a.Rotation)
-        };
+        return rotatePolygon(vertices, point, a.Rotation);
     }
 }
 

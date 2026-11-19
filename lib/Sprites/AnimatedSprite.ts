@@ -1,5 +1,5 @@
-import { HexColor, rectSize } from "../Types/Types.js";
-import SpriteSheet from "./SpriteSheet.js";
+import type { HexColor, vector2D } from "../Types/Types.js";
+import type SpriteSheet from "./SpriteSheet.js";
 import { TextureResource } from "./TextureResource.js";
 
 /**
@@ -53,7 +53,7 @@ export default class AnimatedSprite extends TextureResource {
      * @param tileSize The size of the segments should be rendered at.
      * @param spriteSheet The source spritesheet. This is only required if the content array contains numbers, which behave as a spritesheet tile index.
      */
-    constructor(speed: number, frames: Array<HexColor | number>, tileSize: rectSize, spriteSheet?: SpriteSheet) {
+    constructor(speed: number, frames: Array<HexColor | number>, tileSize: vector2D, spriteSheet?: SpriteSheet) {
         super(frames, tileSize, spriteSheet);
         this.speed = speed;
         this._frames = frames.map(frame => this.compile([frame], tileSize));
@@ -64,14 +64,15 @@ export default class AnimatedSprite extends TextureResource {
      * Advances the animation to the next frame, if enough time has elapsed.
      */
     private nextFrame() {
-        const timeElapsedSinceUpdate = performance.now() - this._lastUpdate;
+        const time = performance.now();
+        const timeElapsedSinceUpdate = time - this._lastUpdate;
         if (timeElapsedSinceUpdate >= this.speed) {
             const currentIndex = this._index;
             this._index = (currentIndex + 1) % this._frames.length;
             this._value = this._frames[this._index];
-            this._lastUpdate = performance.now();
+            this._lastUpdate = time;
         }
     }
 }
 
-export const DEBUG_ANIMATED_SPRITE = new AnimatedSprite(250, ["#ff0000", "#00ff00", "#0000ff"], { width: 5, height: 5});
+export const DEBUG_ANIMATED_SPRITE = new AnimatedSprite(250, ["#ff0000", "#00ff00", "#0000ff"], { x: 5, y: 5});
