@@ -1,7 +1,7 @@
 import { EntityManager } from "../Entities/Entities.js";
 import { CanvasRenderer } from "../Graphics/CanvasRenderer.js";
 import Render from "../Graphics/Renderer.js";
-import { EngineTime, EngineTiming } from "./Timing.js";
+import { FrameTime, EngineTiming } from "./Timing.js";
 
 /**
  * The list of engine events.
@@ -60,7 +60,7 @@ export default class EntityEngine {
      */
     private _ENGINE_INIT: boolean = false;
     /**
-     * The ID of the {@link requestAnimationFrame} request. Used by {@link stop} to cancel any already registered cycle requests before they are ran.
+     * The ID of the {@link requestAnimationFrame} request. Used by {@link EntityEngine.stop} to cancel any already registered cycle requests before they are ran.
      */
     private _CE_FRAMEID: number = 0;
     /**
@@ -88,9 +88,9 @@ export default class EntityEngine {
     /**
      * Provides the Time api for `update` events.
      */
-    private _delta: EngineTime = new EngineTime(this._timings);
-    public get Timing(): EngineTime {
-        return this._delta;
+    private _frameTime: FrameTime = new FrameTime(this._timings);
+    public get FrameTime(): FrameTime {
+        return this._frameTime;
     }
 
     /**
@@ -133,41 +133,38 @@ export default class EntityEngine {
      * @param timeStamp 
      */
     private CycleExecute = (timeStamp: number) => {
+        this.QueueNextCycle();
         // Calculate delta for this frame
-        const lastCycleDeltaMs = (performance.now() - this._timings.previous);
+        const lastCycleDeltaMs = (timeStamp - this._timings.frameStartTime);
         // Treat _timings.targetFramerate as an FPS cap, and only allow a new cycle if the per frame budget is safe
-        let allowExecute = (lastCycleDeltaMs >= (1000 / this._timings.targetFramerate));
+        let allowExecute = (lastCycleDeltaMs >= this._timings.targetFrametimeAllocation);
         // Handle engine pause
-        if (this._CE_WAIT != null) {
+        if (this._CE_WAIT !== null) {
             // Non-thread blocking absolute cutie, I love you.
-            if (performance.now() < this._CE_WAIT) {
+            if (timeStamp < this._CE_WAIT) {
                 allowExecute = false;
             }
-            else if (performance.now() >= this._CE_WAIT) {
+            else {
                 this.cancelWait();
             }
         }
         if (allowExecute) {
-            this._timings.current = timeStamp || performance.now();
+            this._timings.frameStart(timeStamp);
             // ------
             // Call `update` handlers, this is where gamecode is executed
-            this.dispatchEngineEvent(ENGINE_EVENTS.update, this._delta);
-            this._timings.lastUpdateTime = performance.now() - this._timings.current;
+            this.dispatchEngineEvent(ENGINE_EVENTS.update, this._frameTime);
+            this._timings.frameUpdate();
             // Run rendering pass
             Render(this.Renderer, this.Entities);
-            this._timings.lastRenderTime = performance.now() - (this._timings.current + this._timings.lastUpdateTime);
+            this._timings.frameRender();
             // Call `customRender` handlers
             this.dispatchEngineEvent(ENGINE_EVENTS.customRender, this.Renderer.context);
             // ------
-            this._timings.lastFrameTime = performance.now() - this._timings.current;
-            this._timings.previous = timeStamp || performance.now();
-        }
-        if (this._CE_ENABLED) {
-            this.NextCycle();
+            this._timings.frameEnd();
         }
     }
 
-    private NextCycle() {
+    private QueueNextCycle() {
         this._CE_FRAMEID = requestAnimationFrame(this.CycleExecute);
     }
 
@@ -182,11 +179,10 @@ export default class EntityEngine {
             this.dispatchEngineEvent(ENGINE_EVENTS.awake);
             this._ENGINE_INIT = true;
         }
-        // Prevents the timing scale jumping high on the first frame
-        this._timings.previous = performance.now();
+        this._timings.reset();
         this._CE_ENABLED = true;
         this.cancelWait();
-        this.NextCycle();
+        this.QueueNextCycle();
     }
 
     /**
@@ -245,9 +241,9 @@ export default class EntityEngine {
      * 
      * This event is invoked at around same frequency as the set target framerate (according to [requestAnimationFrame's rules](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame#examples)), but is not fixed. However it will not run more _often_ than the target framerate.
      * 
-     * @param listener The listener will be passed a {@link EngineTime} instance that provides - among other things - the time elapsed between frames via the {@link EngineTime.delta} property.
+     * @param listener The listener will be passed a {@link FrameTime} instance that provides - among other things - the time elapsed between frames via the {@link FrameTime.delta} property.
      */
-    public addEventListener(type: "update", listener: (time: EngineTime) => void): void;
+    public addEventListener(type: "update", listener: (time: FrameTime) => void): void;
     /**
      * Register a listener to the `customRender` event. 
      * This event is invoked immediately after rendering the current frame has finished, but before the next frame is started.

@@ -4,9 +4,13 @@
         "noEmitOnError": true,
         "removeComments": false,
         "sourceMap": true,
-        "target": "ES2016",
-        "outDir": "js",
-        "moduleResolution": "Node"
+        "target": "es2016",
+        "outDir": "out",
+        //"declarationDir": "out/__types",
+        //"ignoreDeprecations": "6.0",
+        //"isolatedModules": true,
+        //"esModuleInterop": true,
+        //"declaration": true,
     },
     "include": [
         "lib/**/*", 

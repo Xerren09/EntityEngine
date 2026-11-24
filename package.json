@@ -1,12 +1,20 @@
 {
-  "devDependencies": {
-    "typescript": "^4.7.4"
-  },
-  "scripts": {
-    "build": "tsc --build",
-    "clean": "tsc --build --clean"
-  },
-  "dependencies": {
-    "@types/offscreencanvas": "^2019.7.3"
-  }
+    "scripts": {
+        "build:es": "tsc --emitDeclarationOnly && node ./esbuild.config.js",
+        "build": "tsc --build",
+        "clean": "tsc --build --clean"
+    },
+    "devDependencies": {
+        "@types/offscreencanvas": "^2019.7.3",
+        "esbuild": "0.28.2",
+        "typescript": "^7.0.2"
+    },
+    "allowScripts": {
+        "esbuild@0.28.2": true
+    },
+    "exports": {
+        ".": "./index.js",
+        "./rendering": "./lib/Graphics/Renderer.js",
+        "./math": "./lib/Math/Collision.js"
+    }
 }
