@@ -1,30 +1,11 @@
-import { EntityManager } from "../Entities/Entities.js";
-import { circle2D, vector2D } from "../Types/Types.js";
-import Entity from "../Entities/Entity.js";
+import type { circle2D, vector2D } from "../Types/Types.js";
 import { Vector2D } from "./Vector2D.js";
 
 /**
- * Gets the list of Entities with the given tag(s) that are overlapping the specified Entity.
- * @param self The main Entity we are testing against.
- * @param tags The tags that are used for filtering. Only one must apply to an Entity in order to be tested.
- */
-export function GetCollisionsByTag(entities: EntityManager, self: Entity, tags: string[]): Array<Entity> {
-    let collisionObjects: Entity[] = [];
-    for (const target of entities.List) {
-        const isMatching = tags.some(tag => target.Tags.includes(tag));
-        if (isMatching) {
-            // We need to check both self -> target, and target -> self
-            // because in some cases (target is bigger than self) it's possible for vertices not be inside self or target
-            /*if (isOverlapping(self.Vertices, target.Vertices) || isOverlapping(target.Vertices, self.Vertices))
-            {
-                collisionObjects.push(target);
-            }*/
-        }
-    }
-    return collisionObjects;
-}
-
-/**
+ * Checks if two simple plygons whose vertices are declared clockwise intersect. 
+ * 
+ * ### Example:
+ * 
  * Given two polygons ABCD and EFGH:
  * ```
  * A*--------*B
@@ -37,8 +18,6 @@ export function GetCollisionsByTag(entities: EntityManager, self: Entity, tags: 
  *       H*-----*G
  * ```
  * Checks if any edges intersect or if any vertex of EFGH is within ABCD.
- * 
- * This works for all convex polygons, regardless of vertex count. Vertices do however need to be declared **clockwise.**
  */
 export function polyIntersect(self: vector2D[], target: vector2D[]) : boolean {
     const selfCount = self.length;
@@ -68,23 +47,23 @@ export function polyIntersect(self: vector2D[], target: vector2D[]) : boolean {
 }
 
 /**
- * Given a line segment AB, and a point C:
+ * Given a line segment V->W and point P, checks if P is to the left side of the line:
+ * 
+ * ### Example:
  * 
  * ```
- *       *B
+ *       *W
  *      /
- *  C* /
+ *  P* /
  *    /
  *   /
- * A*
+ * V*
  * ```
- * 
- * Checks if C is to the left side of the line. 
  * @returns 
  */
-export function isLeftOfLine(a: vector2D, b: vector2D, c: vector2D): boolean {
-    const first = (b.x - a.x) * (c.y - a.y);
-    const second = (b.y - a.y) * (c.x - a.x);
+export function isLeftOfLine(v: vector2D, w: vector2D, p: vector2D): boolean {
+    const first = (w.x - v.x) * (p.y - v.y);
+    const second = (w.y - v.y) * (p.x - v.x);
     return (first > second);
 }
 
@@ -100,7 +79,7 @@ export function isLeftOfLine(a: vector2D, b: vector2D, c: vector2D): boolean {
  * ```
  */
 export function lineIntersect(a: vector2D, b: vector2D, c: vector2D, d: vector2D): boolean {
-    return (isLeftOfLine(a, c, d) != isLeftOfLine(b, c, d)) && (isLeftOfLine(a, b, c) != isLeftOfLine(a, b, d));
+    return (isLeftOfLine(a, c, d) !== isLeftOfLine(b, c, d)) && (isLeftOfLine(a, b, c) !== isLeftOfLine(a, b, d));
 }
 
 
@@ -117,71 +96,77 @@ export function lineIntersect(a: vector2D, b: vector2D, c: vector2D, d: vector2D
  *         \___/
  * ```
  */
-export function circlePolyIntersect(a: circle2D, b: vector2D[]) {
+export function circlePolyIntersect(a: circle2D, b: vector2D[]): boolean {
     let isInsideRect: boolean = true;
     let isWithinRadius: boolean = false;
-
+    const radius2 = a.radius * a.radius;
     for (let index = 0; index < b.length; index++) {
         const current = b[index];
         const next = b[(index + 1) % b.length];
-        if (isInsideRect == true && isLeftOfLine(current, next, a.position) == true) {
+        if (isInsideRect === true && isLeftOfLine(current, next, a.position) === false) {
             isInsideRect = false;
         }
-        const dist = distanceToSegment(current, next, a.position);
-        if (dist < a.radius) {
-            //console.log(current, next, a.position);
+        const dist2 = distanceToSegmentSquared(current, next, a.position);
+        if (dist2 < radius2) {
             isWithinRadius = true;
             break;
         }
     }
-    return (isWithinRadius);
+    return (isInsideRect || isWithinRadius);
 }
 
 /**
- * Gets the distance between a line segment AB and point C.
- * ```
- *       *B
- *      /
- * C*  /
- *    /
- *   /
- * A*
- * ```
- * @param a 
- * @param b 
- * @param c 
- * @returns 
+ * Gets the exact distance between the line segment V->W and point P.
+ * @param v The start coordinate of the line segment.
+ * @param w The end coordinate of the line segment.
+ * @param p The point to measure distance from.
+ * @returns The distance between P and V->W.
  */
-export function distanceToSegment(a: vector2D, b: vector2D, c: vector2D) : number {
-    var lineVector = Vector2D.vector(a, b);
-    var pointVector = Vector2D.vector(a, c);
-    var segmentLength = Vector2D.magnitude(lineVector);
-    var line_unitvec = Vector2D.normalise(lineVector);
-    var pnt_vec_scaled = Vector2D.scale(pointVector, 1.0/segmentLength);
-    var t = Vector2D.dot(line_unitvec, pnt_vec_scaled);
-    if (t < 0.0) {
-        t = 0;
+export function distanceToSegment(v: vector2D, w: vector2D, p: vector2D): number {
+    return Math.sqrt(distanceToSegmentSquared(v, w, p));
+}
+
+/**
+ * Gets the distance squared between the line segment V->W and point P.
+ * @param v The start coordinate of the line segment.
+ * @param w The end coordinate of the line segment.
+ * @param p The point to measure distance from.
+ * @returns The distance squared between P and V->W.
+ */
+export function distanceToSegmentSquared(v: vector2D, w: vector2D, p: vector2D): number {
+    const lineLengthSquared = Vector2D.distanceSquared(v, w);
+    if (lineLengthSquared === 0) {
+        return Vector2D.distanceSquared(p, v);
     }
-    else if (t > 1.0) {
-        t = 1.0;
+    let dx = (w.x - v.x);
+    let dy = (w.y - v.y);
+    const t = ((p.x - v.x) * dx + (p.y - v.y) * dy) / lineLengthSquared;
+    if (t <= 0) {
+        return Vector2D.distanceSquared(p, v);
     }
-    var nearest = Vector2D.scale(lineVector, t);
-    var dist = Vector2D.distance(nearest, pointVector);
-    return dist;
+    else if (t >= 1) {
+        return Vector2D.distanceSquared(p, w);
+    }
+    dx = v.x + t * dx;
+    dy = v.y + t * dy;
+    dx = p.x - dx;
+    dy = p.y - dy;
+    return (dx * dx) + (dy * dy);
 }
 
 /**
  * Checks if two circles overlap.
- * @param a 
- * @param b 
- * @returns 
  */
-export function circleIntersect(a: circle2D, b: circle2D) : boolean {
-    if (Vector2D.equals(a.position, b.position)) {
-        return true;
-    }
-    // Get distance between this and target
-    const vectorLength = Vector2D.distance(a.position, b.position);
-    return (vectorLength < (a.radius + b.radius));
+export function circleIntersect(a: circle2D, b: circle2D): boolean {
+    const x = (a.position.x - b.position.x);
+    const y = (a.position.y - b.position.y);
+
+    const ar = a.radius;
+    const br = b.radius;
+    
+    const distsqr = (x * x) + (y * y);
+    const radsqr = (ar + br) * (ar + br);
+
+    return (distsqr <= radsqr);
 }
 

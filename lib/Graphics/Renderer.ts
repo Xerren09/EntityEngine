@@ -34,7 +34,7 @@ export default function Render(renderer: CanvasRenderer, entities: EntityManager
         // If the object is rotated, rotate the canvas and then move its origin to the object's coordinates
         if (rot !== 0) {
             ctx.translate(pos.x, pos.y);
-            ctx.rotate((rot * Math.PI) / 180.0);
+            ctx.rotate(rot);
         }
         ctx.translate(rox, roy);
         ctx.fillStyle = sprite.value;
@@ -107,7 +107,7 @@ export function drawRect(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderin
     };
     if (rotation != 0) {
         ctx.translate(pos.x, pos.y);
-        ctx.rotate((rotation * Math.PI) / 180.0);
+        ctx.rotate(rotation);
         ctx.translate(renderOrigin.x, renderOrigin.y);
         ctx.rect(0, 0, size.x, size.y);
     }

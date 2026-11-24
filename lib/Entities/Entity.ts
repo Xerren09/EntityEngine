@@ -1,16 +1,19 @@
-import AnimatedSprite from '../Sprites/AnimatedSprite.js';
-import Sprite from '../Sprites/Sprite.js';
-import { vector2D } from '../Types/Types.js';
-import { Collider } from './Collision/Colliders/Collider.js';
+import { degToRad, RAD, radToDeg, Vector2D } from '../Math/Vector2D.js';
+import type AnimatedSprite from '../Sprites/AnimatedSprite.js';
+import type Sprite from '../Sprites/Sprite.js';
+import type { vector2D } from '../Types/Types.js';
+import type { Collider } from './Collision/Colliders/Collider.js';
 import { CollisionResolver } from './Collision/Resolver.js';
 import { type EntityManager } from './Entities.js';
+
 
 /**
  * The basic building blocks of the game, entities serve as game objects that can render textures, move around, and interact with other entities.
  */
 export default class Entity {
     protected _position: vector2D = { x: 0, y: 0 };
-    protected _rotation: number = 0;
+    private _rotation: number = 0;
+    private _rotationDeg: number = 0;
     protected _renderSize: vector2D = { x: 0, y: 0 };
 
     /**
@@ -29,20 +32,30 @@ export default class Entity {
         return {...this._position};
     }
     public set Position(val: vector2D) {
-        this._position = {
-            x: val.x,
-            y: val.y
-        };
+        this._position.x = val.x;
+        this._position.y = val.y;
     }
+
     /**
-     * Rotation in degrees.
+     * Rotation in radians.
      */
     public get Rotation() {
         return this._rotation;
     }
     public set Rotation(val: number) {
-        this._rotation = val % 360;
+        this._rotation = val;
+        this._rotationDeg = radToDeg(val);
     }
+    /**
+     * Rotation in degrees.
+     */
+    public get RotationDeg() {
+        return this._rotationDeg;
+    }
+    public set RotationDeg(val: number) {
+        this.Rotation = degToRad(val % 360);
+    }
+
     /**
      * The entity's rendering rect size. This is the size of the rect that will be filled with {@link Entity.Sprite}.
      */
@@ -50,7 +63,8 @@ export default class Entity {
         return {...this._renderSize};
     }
     public set RenderSize(val: vector2D) {
-        this._renderSize = val;
+        this._renderSize.x = val.x;
+        this._renderSize.y = val.y;
     }
     
     /**
@@ -102,19 +116,20 @@ export default class Entity {
      * @param step The number of pixels the entity should move per call.
      */
     public MoveTowards(targetCoordinates: vector2D, step: number) {
-        const distanceVector: vector2D = {
-            x: targetCoordinates.x - (this._position.x),
-            y: targetCoordinates.y - (this._position.y)
-        };
+        if (Vector2D.equalf(this._position, targetCoordinates)) {
+            return;
+        }
+        let dx = targetCoordinates.x - (this._position.x);
+        let dy = targetCoordinates.y - (this._position.y);
         // Get distance between this and target
-        const length = Math.sqrt((distanceVector.x * distanceVector.x) + (distanceVector.y * distanceVector.y));
-        const normalised: vector2D = {
-            x: (distanceVector.x / length),
-            y: (distanceVector.y / length),
-        };
+        const length = Math.sqrt((dx * dx) + (dy * dy));
+        // Normalise
+        dx = dx / length;
+        dy = dy / length;
         // distance check to stop wiggle
         if (length >= step) {
-            this.Translate({ x: (normalised.x * step), y: (normalised.y * step) });
+            this._position.x += dx * step;
+            this._position.y += dy * step;
         }
         else {
             this._position.x = targetCoordinates.x;
