@@ -96,7 +96,7 @@ export default class EntityEngine {
     /**
      * Wrapper for the attached HTML Canvas' draw API.
      */
-    public Renderer: CanvasRenderer;
+    public Renderer!: CanvasRenderer;
     /**
      * Manages the Entities visible to the engine.
      * 
@@ -106,13 +106,12 @@ export default class EntityEngine {
 
     /**
      * 
-     * @param canvasId The ID of the HTML Canvas that will be used to render the game. 
+     * @param canvas The ID of the HTML Canvas that will be used to render the game. 
      */
-    constructor(canvasId?: string) {
+    constructor(canvas: string | HTMLCanvasElement) {
         this.Entities = new EntityManager();
-        if (canvasId) {
-            this.attachToCanvas(canvasId);
-        }
+        this.attachToCanvas(canvas);
+        EngineTiming.checkTimingApiPrecision();
     }
 
     /**
@@ -209,10 +208,10 @@ export default class EntityEngine {
 
     /**
      * Attaches the engine instance to an HTML Canvas that will be used to render the game.
-     * @param canvasID
+     * @param canvas The element ID of the canvas on the current document, or 
      */
-    public attachToCanvas(canvasID: string) {
-        this.Renderer = new CanvasRenderer(canvasID);
+    public attachToCanvas(canvas: string | HTMLCanvasElement) {
+        this.Renderer = new CanvasRenderer(canvas);
     }
 
     /**
