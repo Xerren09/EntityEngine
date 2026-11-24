@@ -1,3 +1,5 @@
+import type Entity from "../Entities/Entity";
+
 /**
  * Used to represent 2D coordinates.
  */
@@ -27,3 +29,20 @@ export type HexColor = `#${string}`;
  */
 export type AABB = [vector2D, vector2D];
 
+/**
+ * An attribute applied to this specific entity. Attributes are designed to be unique and not shared between objects.
+ */
+export interface IEntityAttribute {
+    /**
+     * The entity this attribute applies to.
+     */
+    readonly entity: Entity;
+    /**
+     * Customs tags used to find this attribute easier.
+     */
+    tags: string[];
+    /**
+     * Called when the attached entity's position or rotation is changed.
+     */
+    onTransformChange(): void;
+}

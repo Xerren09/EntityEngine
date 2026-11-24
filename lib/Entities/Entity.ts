@@ -1,7 +1,7 @@
 import { degToRad, RAD, radToDeg, Vector2D } from '../Math/Vector2D.js';
 import type AnimatedSprite from '../Sprites/AnimatedSprite.js';
 import type Sprite from '../Sprites/Sprite.js';
-import type { vector2D } from '../Types/Types.js';
+import type { IEntityAttribute, vector2D } from '../Types/Types.js';
 import type { Collider } from './Collision/Colliders/Collider.js';
 import { CollisionResolver } from './Collision/Resolver.js';
 import { type EntityManager } from './Entities.js';
@@ -26,7 +26,13 @@ export default class Entity {
      */
     public Tags: string[] = [];
     /**
-     * The entity's position. This is treated as the center of the entity.
+     * List of attributes assigned to this entity. Attributes can describe some abstract property of the object, for example colliders.
+     * 
+     * See {@link IEntityAttribute} for more.
+     */
+    public attributes: IEntityAttribute[] = [];
+    /**
+     * The entity's position. This is the center of the entity's rendering rect. See {@link Entity.RenderSize}.
      */
     public get Position(): vector2D {
         return {...this._position};
@@ -34,6 +40,7 @@ export default class Entity {
     public set Position(val: vector2D) {
         this._position.x = val.x;
         this._position.y = val.y;
+        this.updateAttributes();
     }
 
     /**
@@ -45,6 +52,7 @@ export default class Entity {
     public set Rotation(val: number) {
         this._rotation = val;
         this._rotationDeg = radToDeg(val);
+        this.updateAttributes();
     }
     /**
      * Rotation in degrees.
@@ -135,6 +143,7 @@ export default class Entity {
             this._position.x = targetCoordinates.x;
             this._position.y = targetCoordinates.y;
         }
+        this.updateAttributes();
     }
 
     /**
@@ -144,5 +153,15 @@ export default class Entity {
      */
     public IsIntersecting(target: Entity): boolean {
         return CollisionResolver(this, target);
+    }
+
+    /**
+     * See {@link IEntityAttribute} for updated properties.
+     */
+    protected updateAttributes() {
+        for (let index = 0; index < this.attributes.length; index++) {
+            const attribute = this.attributes[index];
+            attribute.onTransformChange();
+        }
     }
 }
