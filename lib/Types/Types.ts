@@ -40,7 +40,7 @@ export interface IEntityAttribute {
     /**
      * Customs tags used to find this attribute easier.
      */
-    tags: string[];
+    tags: Set<string>;
     /**
      * Called when the attached entity's position or rotation is changed.
      */
