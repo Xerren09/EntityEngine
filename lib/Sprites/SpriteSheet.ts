@@ -1,34 +1,39 @@
 import type { ReadonlyVector2D, vector2D } from "../Types/Types.js";
 
-export default class SpriteSheet
-{
+export default class SpriteSheet implements Iterable<vector2D> {
     public readonly Image: HTMLImageElement = new Image();
+    private _loader: Promise<void> | undefined;
     private _ready: boolean = false;
+    private _source: string = "";
+    private _height: number = 0;
+    private _width: number = 0;
+    private _tileSize: vector2D;
+    private _indices: Array<vector2D> = [];
+
     /**
      * Indicates if the spritesheet image has been successfully loaded, decoded, and is ready to use.
      */
     public get ready(): boolean  {
         return this._ready;
     }
-    private _source: string = "";
+
     get source(): string {
         return this._source;
     }
-    private _height: number = 0;
+
     get height() {
         return this._height;
     }
-    private _width: number = 0;
+
     get width() {
         return this._width;
     }
-    private _tileSize: vector2D;
+
     get tileSize() {
         return this._tileSize;
     }
-    private _indices: Array<vector2D> = [];
-    public get indexMatrix(): ReadonlyArray<ReadonlyVector2D>
-    { 
+
+    public get indexMatrix(): ReadonlyArray<ReadonlyVector2D> { 
         return [...this._indices];
     }
 
@@ -53,7 +58,13 @@ export default class SpriteSheet
      * Loads the Spritesheet image. Once the spritesheet has been successfully loaded (see {@link ready} property), subsequent calls will perform no action.
      */
     public async Load() {
-        if (this._ready == false) {
+        if (this._loader) {
+            return await this._loader;
+        }
+        else if (this._ready) {
+            return;
+        }
+        this._loader = new Promise(async (resolve, reject) => {
             this.Image.src = this._source;
             try {
                 await this.Image.decode();
@@ -66,7 +77,9 @@ export default class SpriteSheet
             this._width = this.Image.width;
             this.IndexSpritesheet();
             this._ready = true;
-        }  
+            this._loader = undefined;
+        });
+        return await this._loader; 
     }
 
     /**
@@ -79,7 +92,7 @@ export default class SpriteSheet
             return { x: 0, y: 0 };
         }
         else {
-            return this._indices[index];
+            return {...this._indices[index]};
         }
     }
 
@@ -110,6 +123,14 @@ export default class SpriteSheet
              * columnIndex = x
              */
             this._indices.push({ x: index_column, y: index_row });
+        }
+    }
+
+    *[Symbol.iterator](): Iterator<ReadonlyVector2D> {
+        let i = 0;
+        while (i < this._indices.length) {
+            yield this._indices[i] as ReadonlyVector2D;
+            i++;
         }
     }
 };
