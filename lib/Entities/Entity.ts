@@ -24,7 +24,7 @@ export default class Entity {
     /**
      * Tags used for organisation purposes. See {@link EntityManager.FindAllTagged}.
      */
-    public Tags: string[] = [];
+    public Tags: Set<string> = new Set<string>();
     /**
      * List of attributes assigned to this entity. Attributes can describe some abstract property of the object, for example colliders.
      * 

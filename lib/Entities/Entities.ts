@@ -1,8 +1,14 @@
-import Entity from "./Entity.js";
+import type Entity from "./Entity.js";
 
-// TODO: rework to its reference and not ID based. one instance can only be stored once
-export class EntityManager {
+export class EntityManager implements Iterable<Entity> {
+    /**
+     * Used for fast iteration during rendering. The order of items is not static and may change at any time.
+     */
     private _list: Array<Entity> = [];
+    /**
+     * Used for game code lookups and storage.
+     */
+    private _items: Map<string, Entity> = new Map();
 
     public get List(): ReadonlyArray<Entity> {
         return this._list as ReadonlyArray<Entity>;
@@ -13,8 +19,9 @@ export class EntityManager {
      * @param entity 
      */
     public Add(entity: Entity) {
-        if (this.Find(entity.ID) === undefined) {
+        if (this._items.has(entity.ID) === false) {
             this._list.push(entity);
+            this._items.set(entity.ID, entity);
         }
         else {
             throw new Error(`Can not register "${entity.ID}"; an Entity with the same name already exists.`);
@@ -26,12 +33,15 @@ export class EntityManager {
      * @param tag 
      * @returns 
      */
-    public FindAllTagged(tag: string) {
+    public FindAllTagged(tag: string): Entity[] {
         let ret: Entity[] = [];
-        for (const entity of this._list) {
-            if (entity.Tags.includes(tag)) {
+        let i = 0;
+        while (i < this._list.length) {
+            const entity = this._list[i];
+            if (entity.Tags.has(tag)) {
                 ret.push(entity);
             }
+            i++;
         }
         return ret;
     }
@@ -41,15 +51,8 @@ export class EntityManager {
      * @param name 
      * @returns 
      */
-    public Find(name: string) : Entity | undefined {
-        let ret: Entity | undefined;
-        for (const entity of this._list) {
-            if (entity.ID === name) {
-                ret = entity;
-                break;
-            }
-        }
-        return ret;
+    public Find(name: string): Entity | undefined {
+        return this._items.get(name);
     }
 
     /**
@@ -59,15 +62,22 @@ export class EntityManager {
      * @param name 
      * @returns 
      */
-    public Remove(name: string) : boolean {
+    public Remove(name: string): boolean {
+        const known = this._items.delete(name);
+        if (known === false) {
+            return false;
+        }
+        // Delete from array
         let deleted: boolean = false;
-        for (let index = 0; index < this._list.length; index++) {
-            const element = this._list[index];
-            if (element.ID === name) {
-                this._list.splice(index, 1);
+        let i = 0;
+        while (i < this._list.length) {
+            const entity = this._list[i];
+            if (entity.ID === name) {
+                this._list.splice(i, 1);
                 deleted = true;
                 break;
             }
+            i++;
         }
         return deleted;
     }
@@ -77,5 +87,14 @@ export class EntityManager {
      */
     public Wipe() {
         this._list.length = 0;
+        this._items.clear();
+    }
+
+    *[Symbol.iterator](): IterableIterator<Entity> {
+        let i = 0;
+        while (i < this._list.length) {
+            yield this._list[i];
+            i++;
+        }
     }
 }
