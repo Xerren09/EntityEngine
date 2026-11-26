@@ -81,14 +81,12 @@ export class Vector2D {
         };
     }
 
-    public static vector(v1: vector2D, v2: vector2D): vector2D {
-        const v3: vector2D = {
-            x: v1.x - (v2.x),
-            y: v1.y - (v2.y)
-        };
-        return v3;
-    }
-
+    /**
+     * Adds two vectors.
+     * @param v1 
+     * @param v2 
+     * @returns 
+     */
     public static add(v1: vector2D, v2: vector2D): vector2D {
         return {
             x: v1.x + v2.x,
